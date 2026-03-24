@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JQ — Write</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #111110;
+      --white: #ffffff;
+      --off-white: #f9f9f7;
+      --light: #e0e0dc;
+      --mid: #888885;
+      --sand: #e8d5bb;
+      --accent: #c4a882;
+    }
+
+    body {
+      background: var(--off-white);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 56px;
+      background: var(--white);
+      border-bottom: 1px solid var(--light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 100;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .back-link {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--black); }
+
+    .topbar-divider {
+      width: 1px;
+      height: 16px;
+      background: var(--light);
+    }
+
+    .topbar-title {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--black);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--mid);
+      padding: 4px 10px;
+      border: 1px solid var(--light);
+    }
+
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--light);
+      color: var(--mid);
+    }
+    .btn-ghost:hover { border-color: var(--black); color: var(--black); }
+
+    .btn-primary {
+      background: var(--black);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: #333; }
+
+    .btn-primary:disabled {
+      background: var(--light);
+      color: var(--mid);
+      cursor: default;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      min-height: 100vh;
+      padding-top: 56px;
+    }
+
+    /* ── Writing Area ── */
+    .writing-area {
+      padding: 64px 80px;
+      max-width: 860px;
+    }
+
+    .field-category {
+      margin-bottom: 32px;
+    }
+
+    .category-select {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: transparent;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      padding-right: 16px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888885' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0 center;
+    }
+    .category-select:focus { color: var(--black); }
+
+    .title-input {
+      width: 100%;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 58px);
+      font-weight: 300;
+      line-height: 1.15;
+      color: var(--black);
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+      margin-bottom: 40px;
+    }
+    .title-input::placeholder { color: var(--light); }
+
+    .title-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--light);
+      margin-bottom: 40px;
+    }
+
+    .content-area {
+      width: 100%;
+      min-height: 60vh;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1.9;
+      color: var(--black);
+      background: transparent;
+      border: none;
+      outline: none;
+      resize: none;
+    }
+    .content-area::placeholder {
+      color: var(--light);
+      font-style: italic;
+    }
+
+    /* ── Toolbar (formatting) ── */
+    .format-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 12px 0;
+      border-top: 1px solid var(--light);
+      border-bottom: 1px solid var(--light);
+      margin-bottom: 40px;
+    }
+
+    .fmt-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--mid);
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .fmt-btn:hover { background: var(--off-white); color: var(--black); }
+    .fmt-btn.serif { font-family: 'Cormorant Garamond', serif; font-size: 16px; }
+    .fmt-sep { width: 1px; height: 16px; background: var(--light); margin: 0 6px; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      border-left: 1px solid var(--light);
+      background: var(--white);
+      padding: 48px 32px;
+      position: sticky;
+      top: 56px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
+    }
+
+    .sidebar-section {
+      margin-bottom: 40px;
+    }
+
+    .sidebar-label {
+      font-size: 9px;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-input {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--black);
+      background: var(--off-white);
+      border: 1px solid var(--light);
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sidebar-input:focus { border-color: var(--black); }
+
+    .sidebar-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--light);
+      margin-bottom: 40px;
+    }
+
+    /* ── Media Upload ── */
+    .upload-zone {
+      border: 1px dashed var(--light);
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: #fdf8f2;
+    }
+
+    .upload-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+      opacity: 0.3;
+    }
+
+    .upload-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .upload-sub {
+      font-size: 10px;
+      color: var(--mid);
+      opacity: 0.7;
+    }
+
+    .upload-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* ── Media Grid ── */
+    .media-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .media-item {
+      position: relative;
+      aspect-ratio: 1;
+      background: var(--off-white);
+      overflow: hidden;
+      group: true;
+    }
+
+    .media-item img,
+    .media-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .media-item-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .media-item:hover .media-item-overlay { opacity: 1; }
+
+    .media-action {
+      background: rgba(255,255,255,0.9);
+      border: none;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-progress {
+      margin-top: 12px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-align: center;
+      min-height: 16px;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--black);
+      color: var(--white);
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      padding: 14px 28px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #c0392b; }
+
+    /* ── Word count ── */
+    .word-count {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--mid);
+      margin-top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-left: none; border-top: 1px solid var(--light); }
+      .writing-area { padding: 40px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="/admin" class="back-link">← Dashboard</a>
+      <div class="topbar-divider"></div>
+      <span class="topbar-title" id="topbarTitle">New Entry</span>
+    </div>
+    <div class="topbar-right">
+      <span class="status-badge" id="statusBadge">Draft</span>
+      <button class="btn btn-ghost" id="saveDraftBtn">Save Draft</button>
+      <button class="btn btn-primary" id="publishBtn">Publish</button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- Writing Area -->
+    <main class="writing-area">
+
+      <div class="field-category">
+        <select class="category-select" id="categorySelect">
+          <option value="Design &amp; Inspiration">Design &amp; Inspiration</option>
+          <option value="NYC Culture">NYC Culture</option>
+          <option value="Behind the Scenes">Behind the Scenes</option>
+          <option value="Journal">Journal</option>
+        </select>
+      </div>
+
+      <textarea class="title-input" id="titleInput" placeholder="Entry title" rows="2" spellcheck="true"></textarea>
+
+      <div class="title-divider"></div>
+
+      <!-- Formatting toolbar -->
+      <div class="format-toolbar">
+        <button class="fmt-btn serif" title="Bold" onclick="fmt('bold')"><b>B</b></button>
+        <button class="fmt-btn serif" title="Italic" onclick="fmt('italic')"><em>I</em></button>
+        <div class="fmt-sep"></div>
+        <button class="fmt-btn" title="Heading" onclick="insertHeading()" style="font-size:11px;letter-spacing:0.1em;">H</button>
+        <button class="fmt-btn" title="Quote" onclick="insertBlock('quote')" style="font-size:16px;">"</button>
+        <div class="fmt-sep"></div>
+        <button class="fmt-btn" title="Insert image from media" onclick="insertMediaInline()" style="font-size:14px;">⊞</button>
+      </div>
+
+      <textarea class="content-area" id="contentArea"
+        placeholder="Begin writing…" spellcheck="true"></textarea>
+
+      <p class="word-count" id="wordCount">0 words</p>
+
+    </main>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Date</p>
+        <input type="date" class="sidebar-input" id="dateInput" />
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Media</p>
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">↑</div>
+          <span class="upload-label">Add Photos & Videos</span>
+          <span class="upload-sub">jpg, png, gif, mp4, mov — up to 50MB</span>
+          <input type="file" class="upload-input" id="fileInput"
+            accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm"
+            multiple />
+        </div>
+        <p class="upload-progress" id="uploadProgress"></p>
+        <div class="media-grid" id="mediaGrid"></div>
+      </div>
+
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── State ─────────────────────────────────────────────────────
+    const auth = 'Basic ' + btoa('admin:' + (sessionStorage.getItem('jqpw') || promptPassword()));
+    let mediaUrls = [];
+    let editSlug = null;
+
+    function promptPassword() {
+      const pw = prompt('Admin password:');
+      if (pw) sessionStorage.setItem('jqpw', pw);
+      return pw || '';
+    }
+
+    // ── Load existing post if editing ─────────────────────────────
+    const slugMatch = window.location.pathname.match(/\/admin\/write\/(.+)/);
+    if (slugMatch) {
+      editSlug = slugMatch[1];
+      loadPost(editSlug);
+    }
+
+    async function loadPost(slug) {
+      const res = await fetch(`/admin/api/posts`, { headers: { Authorization: auth } });
+      const posts = await res.json();
+      const post = posts.find(p => p.slug === slug);
+      if (!post) return;
+
+      document.getElementById('titleInput').value = post.title;
+      document.getElementById('contentArea').value = post.content;
+      document.getElementById('categorySelect').value = post.category;
+      document.getElementById('dateInput').value = post.date;
+      document.getElementById('topbarTitle').textContent = post.title || 'Edit Entry';
+      document.getElementById('statusBadge').textContent = post.status === 'published' ? 'Published' : 'Draft';
+      mediaUrls = post.mediaUrls || [];
+      renderMediaGrid();
+      updateWordCount();
+    }
+
+    // ── Set today's date ──────────────────────────────────────────
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateInput').value = today;
+
+    // ── Word count ────────────────────────────────────────────────
+    function updateWordCount() {
+      const text = document.getElementById('contentArea').value.trim();
+      const count = text ? text.split(/\s+/).length : 0;
+      document.getElementById('wordCount').textContent = `${count} word${count !== 1 ? 's' : ''}`;
+    }
+    document.getElementById('contentArea').addEventListener('input', updateWordCount);
+
+    // Update topbar title as user types
+    document.getElementById('titleInput').addEventListener('input', function() {
+      document.getElementById('topbarTitle').textContent = this.value || 'New Entry';
+    });
+
+    // Auto-grow textareas
+    ['titleInput', 'contentArea'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+      });
+    });
+
+    // ── Formatting ────────────────────────────────────────────────
+    function fmt(type) {
+      const ta = document.getElementById('contentArea');
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      const selected = ta.value.slice(start, end);
+      if (!selected) return;
+      const wrap = type === 'bold' ? `**${selected}**` : `_${selected}_`;
+      ta.value = ta.value.slice(0, start) + wrap + ta.value.slice(end);
+      ta.selectionStart = start;
+      ta.selectionEnd = start + wrap.length;
+      ta.focus();
+    }
+
+    function insertHeading() {
+      const ta = document.getElementById('contentArea');
+      const pos = ta.selectionStart;
+      const before = ta.value.slice(0, pos);
+      const lineStart = before.lastIndexOf('\n') + 1;
+      ta.value = ta.value.slice(0, lineStart) + '## ' + ta.value.slice(lineStart);
+      ta.selectionStart = ta.selectionEnd = pos + 3;
+      ta.focus();
+    }
+
+    function insertBlock(type) {
+      const ta = document.getElementById('contentArea');
+      const pos = ta.selectionStart;
+      const insert = type === 'quote' ? '\n> ' : '\n---\n';
+      ta.value = ta.value.slice(0, pos) + insert + ta.value.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + insert.length;
+      ta.focus();
+    }
+
+    function insertMediaInline() {
+      if (!mediaUrls.length) { showToast('Upload media first', true); return; }
+      const ta = document.getElementById('contentArea');
+      const url = mediaUrls[mediaUrls.length - 1];
+      const pos = ta.selectionStart;
+      const insert = `\n![image](${url})\n`;
+      ta.value = ta.value.slice(0, pos) + insert + ta.value.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + insert.length;
+      ta.focus();
+    }
+
+    // ── Media Upload ──────────────────────────────────────────────
+    const fileInput = document.getElementById('fileInput');
+    const uploadZone = document.getElementById('uploadZone');
+
+    uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+    uploadZone.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadZone.classList.remove('drag-over');
+      uploadFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', () => uploadFiles(fileInput.files));
+
+    async function uploadFiles(files) {
+      if (!files.length) return;
+      const progress = document.getElementById('uploadProgress');
+      progress.textContent = `Uploading ${files.length} file${files.length > 1 ? 's' : ''}…`;
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          const res = await fetch('/admin/upload', {
+            method: 'POST',
+            headers: { Authorization: auth },
+            body: formData
+          });
+          if (!res.ok) throw new Error('Upload failed');
+          const data = await res.json();
+          mediaUrls.push(data.url);
+          renderMediaGrid();
+        } catch {
+          showToast('Upload failed', true);
+        }
+      }
+      progress.textContent = '';
+      fileInput.value = '';
+    }
+
+    function renderMediaGrid() {
+      const grid = document.getElementById('mediaGrid');
+      grid.innerHTML = mediaUrls.map((url, i) => {
+        const isVideo = /\.(mp4|mov|webm)$/i.test(url);
+        const media = isVideo
+          ? `<video src="${url}" muted playsinline></video>`
+          : `<img src="${url}" alt="media" loading="lazy" />`;
+        return `
+          <div class="media-item">
+            ${media}
+            <div class="media-item-overlay">
+              <button class="media-action" title="Insert into post" onclick="insertUrl('${url}')">⊞</button>
+              <button class="media-action" title="Remove" onclick="removeMedia(${i})">×</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function insertUrl(url) {
+      const ta = document.getElementById('contentArea');
+      const pos = ta.selectionStart;
+      const isVideo = /\.(mp4|mov|webm)$/i.test(url);
+      const insert = isVideo
+        ? `\n<video src="${url}" controls style="max-width:100%;margin:16px 0;"></video>\n`
+        : `\n![image](${url})\n`;
+      ta.value = ta.value.slice(0, pos) + insert + ta.value.slice(pos);
+      ta.selectionStart = ta.selectionEnd = pos + insert.length;
+      ta.focus();
+      showToast('Inserted into post');
+    }
+
+    function removeMedia(i) {
+      mediaUrls.splice(i, 1);
+      renderMediaGrid();
+    }
+
+    // ── Save / Publish ────────────────────────────────────────────
+    async function save(status) {
+      const title = document.getElementById('titleInput').value.trim();
+      const content = document.getElementById('contentArea').value.trim();
+      const category = document.getElementById('categorySelect').value;
+      const date = document.getElementById('dateInput').value;
+
+      if (!title) { showToast('Please add a title', true); return; }
+      if (!content) { showToast('Please add some content', true); return; }
+
+      const publishBtn = document.getElementById('publishBtn');
+      publishBtn.disabled = true;
+      publishBtn.textContent = 'Saving…';
+
+      const body = { title, content, category, date, status, mediaUrls };
+
+      try {
+        const method = editSlug ? 'PUT' : 'POST';
+        const url = editSlug ? `/admin/api/posts/${editSlug}` : '/admin/api/posts';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', Authorization: auth },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) throw new Error('Save failed');
+        const post = await res.json();
+
+        editSlug = post.slug;
+        window.history.replaceState({}, '', `/admin/write/${post.slug}`);
+        document.getElementById('statusBadge').textContent = status === 'published' ? 'Published' : 'Draft';
+        document.getElementById('topbarTitle').textContent = title;
+        showToast(status === 'published' ? 'Published' : 'Saved as draft');
+      } catch {
+        showToast('Failed to save', true);
+      } finally {
+        publishBtn.disabled = false;
+        publishBtn.textContent = 'Publish';
+      }
+    }
+
+    document.getElementById('publishBtn').addEventListener('click', () => save('published'));
+    document.getElementById('saveDraftBtn').addEventListener('click', () => save('draft'));
+
+    // ── Toast ─────────────────────────────────────────────────────
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast' + (isError ? ' error' : '');
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ── Keyboard shortcut: Cmd+S / Ctrl+S ────────────────────────
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        save('draft');
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'Enter') {
+        e.preventDefault();
+        save('published');
+      }
+    });
+  </script>
+
+</body>
+</html>
