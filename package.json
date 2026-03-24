@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/jibranqazi/jibran-qazi-website#readme",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1015.0",
+    "@aws-sdk/lib-dynamodb": "^3.1015.0",
     "express": "^5.2.1"
   }
 }

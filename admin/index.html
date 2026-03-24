@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JQ — Subscribers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #111110;
+      --white: #ffffff;
+      --off-white: #f9f9f7;
+      --light: #e0e0dc;
+      --mid: #888885;
+    }
+
+    body {
+      background: var(--off-white);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--light);
+      padding: 28px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+    }
+
+    .header-label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 48px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2px;
+      margin-bottom: 48px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      padding: 32px;
+      border: 1px solid var(--light);
+    }
+
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 12px;
+    }
+
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--black);
+    }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+      border: 1px solid var(--light);
+    }
+
+    thead tr {
+      border-bottom: 1px solid var(--light);
+    }
+
+    th {
+      text-align: left;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+      font-weight: 400;
+      padding: 16px 24px;
+    }
+
+    td {
+      padding: 18px 24px;
+      font-size: 12px;
+      letter-spacing: 0.03em;
+      color: var(--black);
+      border-bottom: 1px solid var(--off-white);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: var(--off-white); }
+
+    .badge {
+      display: inline-block;
+      font-size: 8px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border: 1px solid var(--light);
+      color: var(--mid);
+    }
+
+    .badge.email { border-color: var(--black); color: var(--black); }
+
+    .empty {
+      text-align: center;
+      padding: 80px 24px;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 22px;
+      color: var(--mid);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 80px 24px;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 20px 24px; }
+      main { padding: 40px 24px; }
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">Jibran Qazi</div>
+    <div class="header-label">Subscriber Dashboard</div>
+  </header>
+
+  <main>
+    <div class="stats">
+      <div class="stat-card">
+        <p class="stat-label">Total Subscribers</p>
+        <p class="stat-value" id="total">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Email</p>
+        <p class="stat-value" id="email-count">—</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-label">Phone</p>
+        <p class="stat-value" id="phone-count">—</p>
+      </div>
+    </div>
+
+    <p class="section-label">All Subscribers</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Contact</th>
+          <th>Type</th>
+          <th>Subscribed</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="4" class="loading">Loading...</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    async function load() {
+      try {
+        const res = await fetch('/admin/subscribers', {
+          headers: {
+            'Authorization': 'Basic ' + btoa('admin:' + prompt('Enter admin password:'))
+          }
+        });
+
+        if (res.status === 401) {
+          document.getElementById('table-body').innerHTML =
+            '<tr><td colspan="4" class="empty">Incorrect password.</td></tr>';
+          return;
+        }
+
+        const data = await res.json();
+        const subs = data.subscribers || [];
+
+        document.getElementById('total').textContent = data.count;
+        document.getElementById('email-count').textContent = subs.filter(s => s.type === 'email').length;
+        document.getElementById('phone-count').textContent = subs.filter(s => s.type === 'phone').length;
+
+        if (subs.length === 0) {
+          document.getElementById('table-body').innerHTML =
+            '<tr><td colspan="4" class="empty">No subscribers yet.</td></tr>';
+          return;
+        }
+
+        document.getElementById('table-body').innerHTML = subs.map((s, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${s.contact}</td>
+            <td><span class="badge ${s.type}">${s.type}</span></td>
+            <td>${new Date(s.subscribedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        document.getElementById('table-body').innerHTML =
+          '<tr><td colspan="4" class="empty">Failed to load subscribers.</td></tr>';
+      }
+    }
+
+    load();
+  </script>
+
+</body>
+</html>
