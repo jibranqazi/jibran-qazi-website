@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 
@@ -97,6 +98,38 @@ app.get('/admin/subscribers', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch subscribers.' });
   }
+});
+
+// ── GET /api/posts ────────────────────────────────────────────────
+app.get('/api/posts', (req, res) => {
+  try {
+    const posts = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'posts.json'), 'utf8'));
+    res.json(posts);
+  } catch {
+    res.json([]);
+  }
+});
+
+// ── GET /api/posts/:slug ──────────────────────────────────────────
+app.get('/api/posts/:slug', (req, res) => {
+  try {
+    const posts = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'posts.json'), 'utf8'));
+    const post = posts.find(p => p.slug === req.params.slug);
+    if (!post) return res.status(404).json({ error: 'Post not found' });
+    res.json(post);
+  } catch {
+    res.status(500).json({ error: 'Error loading post' });
+  }
+});
+
+// ── GET /journal ──────────────────────────────────────────────────
+app.get('/journal', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'journal.html'));
+});
+
+// ── GET /journal/:slug ────────────────────────────────────────────
+app.get('/journal/:slug', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'post.html'));
 });
 
 // ── Catch-all ────────────────────────────────────────────────────

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Journal — Jibran Qazi</title>
+  <meta name="description" content="Thoughts on design, NYC culture, and the making of something rare. The Jibran Qazi journal." />
+  <link rel="canonical" href="https://www.jibranqazi.com/journal" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --white: #e8d5bb;
+      --black: #1a1008;
+      --mid: #7a6248;
+      --light: #c8ad8e;
+    }
+
+    body {
+      background: #e8d5bb;
+      min-height: 100vh;
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 32px 48px;
+    }
+    .nav-brand {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: var(--black);
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: letter-spacing 0.5s ease;
+    }
+    .nav-brand:hover { letter-spacing: 0.55em; }
+    .nav-back {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: var(--mid);
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .nav-back:hover { color: var(--black); }
+
+    /* MAIN */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 160px 48px 120px;
+    }
+
+    /* HEADER */
+    .journal-header {
+      margin-bottom: 80px;
+    }
+    .journal-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 24px;
+    }
+    .journal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(64px, 10vw, 96px);
+      line-height: 0.9;
+      color: var(--black);
+      margin-bottom: 28px;
+    }
+    .journal-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--mid);
+      line-height: 1.6;
+    }
+
+    /* FILTERS */
+    .journal-filters {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--light);
+      padding-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: none;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--mid);
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.3s ease;
+      position: relative;
+    }
+    .filter-btn::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--black);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .filter-btn.active,
+    .filter-btn:hover { color: var(--black); }
+    .filter-btn.active::after { width: 100%; }
+
+    /* POSTS */
+    .posts-container {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .post-item {
+      display: grid;
+      grid-template-columns: 80px 1fr auto;
+      gap: 32px;
+      align-items: baseline;
+      padding: 28px 0;
+      border-bottom: 1px solid rgba(200, 173, 142, 0.4);
+      text-decoration: none;
+      transition: opacity 0.3s ease;
+    }
+    .post-item:first-child { border-top: 1px solid rgba(200, 173, 142, 0.4); }
+    .post-item:hover { opacity: 0.6; }
+
+    .post-date {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--light);
+      white-space: nowrap;
+    }
+    .post-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 300;
+      color: var(--black);
+      line-height: 1.2;
+    }
+    .post-category {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--mid);
+      white-space: nowrap;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      padding: 60px 0;
+      border-top: 1px solid rgba(200, 173, 142, 0.4);
+    }
+    .empty-state p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 22px;
+      font-weight: 300;
+      color: var(--light);
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 32px 48px;
+      border-top: 1px solid var(--light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer p, footer a {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: var(--mid);
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    footer a { transition: color 0.3s ease; }
+    footer a:hover { color: var(--black); }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      nav { padding: 20px 20px; }
+      main { padding: 120px 24px 80px; }
+      .journal-filters { gap: 20px; }
+      .post-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .post-category { display: none; }
+      footer {
+        flex-direction: column;
+        gap: 16px;
+        padding: 28px 24px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-brand">Jibran Qazi</a>
+    <a href="/" class="nav-back">← Home</a>
+  </nav>
+
+  <main>
+    <header class="journal-header">
+      <p class="journal-eyebrow">Jibran Qazi</p>
+      <h1 class="journal-title">Journal</h1>
+      <p class="journal-desc">Thoughts on design, NYC culture,<br/>and the making of something rare.</p>
+    </header>
+
+    <div class="journal-filters">
+      <button class="filter-btn active" data-category="all">All</button>
+      <button class="filter-btn" data-category="Design &amp; Inspiration">Design</button>
+      <button class="filter-btn" data-category="NYC Culture">Culture</button>
+      <button class="filter-btn" data-category="Behind the Scenes">Behind the Scenes</button>
+    </div>
+
+    <div id="posts-container" class="posts-container"></div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Jibran Qazi</p>
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Service</a>
+    <p>All Rights Reserved</p>
+  </footer>
+
+  <script>
+    let allPosts = [];
+    let activeCategory = 'all';
+
+    function formatDate(d) {
+      return new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    function renderPosts(posts) {
+      const container = document.getElementById('posts-container');
+      if (posts.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>The first entry is being written.</p></div>';
+        return;
+      }
+      container.innerHTML = posts.map(post => `
+        <a href="/journal/${post.slug}" class="post-item">
+          <span class="post-date">${formatDate(post.date)}</span>
+          <span class="post-title">${post.title}</span>
+          <span class="post-category">${post.category}</span>
+        </a>
+      `).join('');
+    }
+
+    function filterPosts(category) {
+      activeCategory = category;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.category === category);
+      });
+      const filtered = category === 'all'
+        ? allPosts
+        : allPosts.filter(p => p.category === category);
+      renderPosts(filtered);
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => filterPosts(btn.dataset.category));
+    });
+
+    fetch('/api/posts')
+      .then(r => r.json())
+      .then(posts => {
+        allPosts = posts;
+        renderPosts(posts);
+      })
+      .catch(() => renderPosts([]));
+  </script>
+
+</body>
+</html>

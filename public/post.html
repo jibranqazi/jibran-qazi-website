@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title id="page-title">Journal — Jibran Qazi</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --white: #e8d5bb;
+      --black: #1a1008;
+      --mid: #7a6248;
+      --light: #c8ad8e;
+    }
+
+    body {
+      background: #e8d5bb;
+      min-height: 100vh;
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 99;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 32px 48px;
+    }
+    .nav-brand {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: var(--black);
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    .nav-back {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: var(--mid);
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .nav-back:hover { color: var(--black); }
+
+    /* ARTICLE */
+    article {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 160px 48px 120px;
+    }
+
+    .post-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .post-category {
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .meta-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--light);
+    }
+    .post-date {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: var(--light);
+    }
+
+    .post-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(40px, 6vw, 64px);
+      line-height: 1.05;
+      color: var(--black);
+      margin-bottom: 48px;
+    }
+
+    .post-divider {
+      width: 48px;
+      height: 1px;
+      background: var(--mid);
+      margin-bottom: 48px;
+    }
+
+    /* CONTENT */
+    .post-content {
+      font-size: 16px;
+      line-height: 1.9;
+      color: var(--black);
+    }
+    .post-content p { margin-bottom: 28px; }
+    .post-content h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 32px;
+      color: var(--black);
+      margin: 48px 0 20px;
+    }
+    .post-content h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: 24px;
+      color: var(--mid);
+      margin: 36px 0 16px;
+    }
+    .post-content blockquote {
+      border-left: 1px solid var(--mid);
+      padding-left: 28px;
+      margin: 36px 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 22px;
+      color: var(--mid);
+      line-height: 1.6;
+    }
+
+    /* BACK LINK */
+    .post-back {
+      display: inline-block;
+      margin-top: 64px;
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      border-bottom: 1px solid var(--light);
+      padding-bottom: 4px;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+    .post-back:hover { color: var(--black); border-color: var(--black); }
+
+    /* NOT FOUND */
+    .not-found {
+      text-align: center;
+      padding: 80px 0;
+    }
+    .not-found h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 300;
+      color: var(--light);
+      margin-bottom: 20px;
+    }
+    .not-found p {
+      font-size: 12px;
+      color: var(--mid);
+      letter-spacing: 0.08em;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 32px 48px;
+      border-top: 1px solid var(--light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    footer p, footer a {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: var(--mid);
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      nav { padding: 20px 20px; }
+      article { padding: 120px 24px 80px; }
+      footer {
+        flex-direction: column;
+        gap: 16px;
+        padding: 28px 24px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-brand">Jibran Qazi</a>
+    <a href="/journal" class="nav-back">← Journal</a>
+  </nav>
+
+  <article id="post-container"></article>
+
+  <footer>
+    <p>&copy; 2026 Jibran Qazi</p>
+    <a href="/privacy.html">Privacy Policy</a>
+    <a href="/terms.html">Terms of Service</a>
+    <p>All Rights Reserved</p>
+  </footer>
+
+  <script>
+    const slug = window.location.pathname.split('/').pop();
+
+    fetch(`/api/posts/${slug}`)
+      .then(r => {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
+      })
+      .then(post => {
+        document.getElementById('page-title').textContent = `${post.title} — Jibran Qazi`;
+
+        const date = new Date(post.date).toLocaleDateString('en-US', {
+          month: 'long', day: 'numeric', year: 'numeric'
+        });
+
+        document.getElementById('post-container').innerHTML = `
+          <div class="post-meta">
+            <span class="post-category">${post.category}</span>
+            <div class="meta-dot"></div>
+            <span class="post-date">${date}</span>
+          </div>
+          <h1 class="post-title">${post.title}</h1>
+          <div class="post-divider"></div>
+          <div class="post-content">${post.content}</div>
+          <a href="/journal" class="post-back">← Back to Journal</a>
+        `;
+      })
+      .catch(() => {
+        document.getElementById('post-container').innerHTML = `
+          <div class="not-found">
+            <h2>Not Found</h2>
+            <p>This entry doesn't exist.</p>
+            <a href="/journal" class="post-back" style="margin-top:32px">← Back to Journal</a>
+          </div>
+        `;
+      });
+  </script>
+
+</body>
+</html>
