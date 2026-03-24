@@ -587,8 +587,14 @@
 
     async function tryAuth(pw) {
       const token = 'Basic ' + btoa('admin:' + pw);
-      const res = await fetch('/admin/api/posts', { headers: { Authorization: token } });
-      return { ok: res.ok, token };
+      try {
+        const res = await fetch('/admin/api/posts', { headers: { Authorization: token } });
+        // 401 = wrong password, anything else (200, 500, etc.) = auth passed
+        return { ok: res.status !== 401, token };
+      } catch {
+        // Network error — assume auth is fine, let the save fail with a clear message
+        return { ok: true, token };
+      }
     }
 
     async function initAuth() {
