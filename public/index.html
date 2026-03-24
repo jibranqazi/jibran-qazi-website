@@ -33,6 +33,12 @@
       font-weight: 300;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      width: 100%;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100%;
     }
 
     /* ── NAV ── */
@@ -396,17 +402,104 @@
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      nav { padding: 24px 24px; }
-      .hero { padding: 120px 24px 60px; }
-      .hero-title { font-size: 80px; }
-      .art { padding: 80px 24px; }
-      .art-inner { grid-template-columns: 1fr; grid-template-rows: auto; }
-      .art-panel-left { grid-row: 1; aspect-ratio: 3/2; }
-      .art-panel-top-right { grid-column: 1; grid-row: 2; min-height: 200px; }
-      .art-panel-bottom-right { grid-column: 1; grid-row: 3; }
-      .divider { padding: 0 24px 80px; }
-      .notify { padding: 80px 24px; }
-      footer { flex-direction: column; gap: 12px; padding: 24px; }
+      /* Nav */
+      nav {
+        padding: 20px 20px;
+      }
+      .nav-brand { font-size: 10px; letter-spacing: 0.25em; }
+      .nav-right { font-size: 9px; letter-spacing: 0.2em; }
+
+      /* Hero */
+      .hero {
+        padding: 100px 24px 80px;
+        min-height: unset;
+      }
+      .hero-eyebrow {
+        font-size: 8px;
+        letter-spacing: 0.3em;
+        margin-bottom: 36px;
+      }
+      .hero-title {
+        font-size: clamp(64px, 18vw, 88px);
+        margin-bottom: 36px;
+      }
+      .hero-tagline {
+        font-size: 15px;
+        margin-bottom: 48px;
+      }
+
+      /* Countdown */
+      .countdown {
+        gap: 12px;
+        flex-wrap: nowrap;
+        width: 100%;
+        justify-content: center;
+      }
+      .countdown-number {
+        font-size: clamp(28px, 7vw, 40px);
+        min-width: 1.8ch;
+      }
+      .countdown-label {
+        font-size: 7px;
+        letter-spacing: 0.25em;
+      }
+      .countdown-sep {
+        font-size: 28px;
+        margin-top: 2px;
+      }
+
+      /* Art section */
+      .art { padding: 60px 20px; }
+      .art-inner {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 2px;
+      }
+      .art-panel-left {
+        grid-column: 1;
+        grid-row: 1;
+        aspect-ratio: 4/3;
+        padding: 32px;
+      }
+      .art-quote { font-size: 28px; }
+      .art-panel-top-right {
+        grid-column: 1;
+        grid-row: 2;
+        min-height: 160px;
+        padding: 32px;
+      }
+      .art-panel-top-right p { font-size: 52px; }
+      .art-panel-bottom-right {
+        grid-column: 1;
+        grid-row: 3;
+        min-height: auto;
+        padding: 32px;
+      }
+
+      /* Divider */
+      .divider { padding: 0 20px 60px; }
+
+      /* Notify */
+      .notify { padding: 60px 24px; }
+      .notify-heading { font-size: clamp(36px, 9vw, 52px); }
+
+      /* Footer */
+      footer {
+        flex-direction: column;
+        gap: 16px;
+        padding: 28px 24px;
+        text-align: center;
+      }
+    }
+
+    /* Extra small phones */
+    @media (max-width: 390px) {
+      nav { padding: 20px 16px; }
+      .nav-brand { font-size: 9px; letter-spacing: 0.15em; }
+      .nav-right { font-size: 8px; letter-spacing: 0.15em; }
+      .countdown { gap: 8px; }
+      .countdown-number { font-size: 26px; }
+      .countdown-sep { font-size: 22px; }
     }
 
   </style>
