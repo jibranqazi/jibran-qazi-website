@@ -384,6 +384,141 @@
       margin-top: 24px;
     }
 
+    /* ── CUSTOM CURSOR ── */
+    * { cursor: none !important; }
+
+    .cursor-dot {
+      position: fixed;
+      top: 0; left: 0;
+      width: 6px; height: 6px;
+      background: var(--black);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s ease, height 0.3s ease, background 0.3s ease, opacity 0.3s ease;
+    }
+
+    .cursor-ring {
+      position: fixed;
+      top: 0; left: 0;
+      width: 36px; height: 36px;
+      border: 1px solid var(--black);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.4s ease,
+                  opacity 0.3s ease;
+    }
+
+    body.cursor-hover .cursor-ring {
+      width: 64px; height: 64px;
+      border-color: var(--mid);
+    }
+
+    body.cursor-hover .cursor-dot {
+      width: 4px; height: 4px;
+      background: var(--mid);
+    }
+
+    /* ── NAV HOVER ── */
+    .nav-brand {
+      transition: letter-spacing 0.5s ease, opacity 0.3s ease;
+    }
+    .nav-brand:hover { letter-spacing: 0.55em; }
+
+    .nav-right {
+      transition: opacity 0.3s ease;
+    }
+    .nav-right:hover { opacity: 0.5; }
+
+    /* ── HERO TITLE ── */
+    .hero-title {
+      transition: transform 0.6s ease, opacity 0.3s ease;
+    }
+
+    /* ── COUNTDOWN HOVER ── */
+    .countdown-unit {
+      transition: transform 0.4s ease;
+    }
+    .countdown-unit:hover {
+      transform: translateY(-4px);
+    }
+    .countdown-unit:hover .countdown-number {
+      color: var(--mid);
+    }
+    .countdown-number {
+      transition: color 0.4s ease;
+    }
+
+    /* ── BUTTON HOVER ── */
+    .form-row {
+      transition: border-color 0.4s ease;
+    }
+    .form-row:hover {
+      border-color: var(--mid);
+    }
+    .form-row button {
+      position: relative;
+      overflow: hidden;
+    }
+    .form-row button::after {
+      content: '';
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      width: 0;
+      height: 1px;
+      background: var(--black);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .form-row button:hover::after { width: calc(100% - 16px); }
+    .form-row button:hover { color: var(--black); }
+
+    /* ── FOOTER LINKS HOVER ── */
+    footer a {
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    footer a::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0;
+      width: 0; height: 1px;
+      background: var(--black);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    footer a:hover::after { width: 100%; }
+
+    /* ── ART PANELS HOVER ── */
+    .art-panel-left,
+    .art-panel-top-right,
+    .art-panel-bottom-right {
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.5s ease;
+    }
+    .art-panel-left:hover {
+      transform: scale(1.01);
+    }
+    .art-panel-bottom-right:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(26,16,8,0.08);
+    }
+
+    /* ── INSTAGRAM LINK ── */
+    nav a, footer a {
+      transition: opacity 0.3s ease, letter-spacing 0.4s ease;
+    }
+
+    /* Hide cursor on mobile */
+    @media (max-width: 768px) {
+      * { cursor: auto !important; }
+      .cursor-dot, .cursor-ring { display: none; }
+    }
+
     /* ── FOOTER ── */
     footer {
       padding: 32px 48px;
@@ -505,6 +640,10 @@
   </style>
 </head>
 <body>
+
+  <!-- CUSTOM CURSOR -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
 
   <!-- NAV -->
   <nav>
@@ -631,14 +770,55 @@
       setInterval(tick, 1000);
     })();
 
-    // Parallax on hero title
+    // ── CUSTOM CURSOR ──
+    const dot  = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mouseX = 0, mouseY = 0;
+    let ringX  = 0, ringY  = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      dot.style.left = mouseX + 'px';
+      dot.style.top  = mouseY + 'px';
+    });
+
+    // Ring follows with lag for elegant trailing effect
+    (function animateRing() {
+      ringX += (mouseX - ringX) * 0.12;
+      ringY += (mouseY - ringY) * 0.12;
+      ring.style.left = ringX + 'px';
+      ring.style.top  = ringY + 'px';
+      requestAnimationFrame(animateRing);
+    })();
+
+    // Grow ring on hover over interactive elements
+    const hoverTargets = document.querySelectorAll(
+      'a, button, input, .countdown-unit, .art-panel-left, .art-panel-top-right, .art-panel-bottom-right'
+    );
+    hoverTargets.forEach(el => {
+      el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+      el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+    });
+
+    // Hide cursor when leaving window
+    document.addEventListener('mouseleave', () => {
+      dot.style.opacity  = '0';
+      ring.style.opacity = '0';
+    });
+    document.addEventListener('mouseenter', () => {
+      dot.style.opacity  = '1';
+      ring.style.opacity = '1';
+    });
+
+    // ── PARALLAX on hero title ──
     document.addEventListener('mousemove', (e) => {
       const t = document.querySelector('.hero-title');
       if (!t) return;
       const x = (e.clientX / window.innerWidth - 0.5) * 8;
       const y = (e.clientY / window.innerHeight - 0.5) * 8;
       t.style.transform = `translate(${x}px, ${y}px)`;
-      t.style.transition = 'transform 0.5s ease';
+      t.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
     });
   </script>
 
