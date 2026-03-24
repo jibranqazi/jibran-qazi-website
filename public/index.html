@@ -88,13 +88,6 @@
       margin-bottom: 56px;
     }
 
-    .hero-line {
-      width: 1px;
-      height: 60px;
-      background: var(--light);
-      margin: 0 auto 56px;
-    }
-
     .hero-tagline {
       font-family: 'Cormorant Garamond', serif;
       font-weight: 300;
@@ -102,40 +95,6 @@
       font-size: 18px;
       color: var(--mid);
       letter-spacing: 0.08em;
-    }
-
-    /* ── MARQUEE ── */
-    .marquee-wrap {
-      overflow: hidden;
-      border-top: 1px solid var(--light);
-      border-bottom: 1px solid var(--light);
-      padding: 18px 0;
-      background: var(--off-white);
-    }
-
-    .marquee-track {
-      display: flex;
-      gap: 80px;
-      width: max-content;
-      animation: marquee 18s linear infinite;
-    }
-
-    .marquee-track span {
-      font-size: 9px;
-      letter-spacing: 0.45em;
-      text-transform: uppercase;
-      color: var(--mid);
-      white-space: nowrap;
-    }
-
-    .marquee-track span.dot {
-      letter-spacing: 0;
-      color: var(--light);
-    }
-
-    @keyframes marquee {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
     }
 
     /* ── ART ── */
@@ -417,61 +376,11 @@
 
   <!-- HERO -->
   <section class="hero">
-    <p class="hero-eyebrow">A New Vision of Luxury</p>
+    <p class="hero-eyebrow">A New York City Design Studio</p>
     <h1 class="hero-title">Coming<br/>Soon</h1>
-    <div class="hero-line"></div>
     <p class="hero-tagline">Something rare is being made.</p>
   </section>
 
-  <!-- MARQUEE -->
-  <div class="marquee-wrap">
-    <div class="marquee-track">
-      <span>Jibran Qazi</span><span class="dot">—</span>
-      <span>Luxury</span><span class="dot">—</span>
-      <span>Intention</span><span class="dot">—</span>
-      <span>Form</span><span class="dot">—</span>
-      <span>Silence</span><span class="dot">—</span>
-      <span>2026</span><span class="dot">—</span>
-      <span>Jibran Qazi</span><span class="dot">—</span>
-      <span>Luxury</span><span class="dot">—</span>
-      <span>Intention</span><span class="dot">—</span>
-      <span>Form</span><span class="dot">—</span>
-      <span>Silence</span><span class="dot">—</span>
-      <span>2026</span><span class="dot">—</span>
-    </div>
-  </div>
-
-  <!-- ART -->
-  <section class="art">
-    <div class="art-inner">
-
-      <div class="art-panel-left">
-        <span class="art-label">The Ethos</span>
-        <p class="art-quote">"Wear less.<br/>Mean more."</p>
-      </div>
-
-      <div class="art-panel-top-right">
-        <p>JQ</p>
-      </div>
-
-      <div class="art-panel-bottom-right">
-        <span class="tag">The Principles</span>
-        <div class="values">
-          <span>Restraint</span>
-          <span>Precision</span>
-          <span>Presence</span>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- DIVIDER -->
-  <div class="divider">
-    <div class="divider-line"></div>
-    <span class="divider-text">Launching 2026</span>
-    <div class="divider-line"></div>
-  </div>
 
   <!-- NOTIFY -->
   <section class="notify">
