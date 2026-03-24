@@ -171,7 +171,7 @@ app.post('/admin/api/posts', requireAdmin, async (req, res) => {
     res.status(201).json(post);
   } catch (err) {
     console.error('DynamoDB PutCommand error:', err.name, err.message);
-    res.status(500).json({ error: 'Failed to save post.', detail: err.message, code: err.name });
+    res.status(500).json({ error: 'Failed to save post.' });
   }
 });
 
