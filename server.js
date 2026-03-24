@@ -112,11 +112,11 @@ app.get('/admin', (req, res) => {
 });
 
 // ── GET /admin/write ──────────────────────────────────────────────
-app.get('/admin/write', requireAdmin, (req, res) => {
+app.get('/admin/write', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'write.html'));
 });
 
-app.get('/admin/write/:slug', requireAdmin, (req, res) => {
+app.get('/admin/write/:slug', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'write.html'));
 });
 
