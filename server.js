@@ -170,8 +170,8 @@ app.post('/admin/api/posts', requireAdmin, async (req, res) => {
     await db.send(new PutCommand({ TableName: POSTS_TABLE, Item: post }));
     res.status(201).json(post);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to save post.' });
+    console.error('DynamoDB PutCommand error:', err.name, err.message);
+    res.status(500).json({ error: 'Failed to save post.', detail: err.message, code: err.name });
   }
 });
 
