@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="JIBRAN QAZI" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#e8d5bb" />
   <title>JIBRAN QAZI</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
@@ -519,6 +524,71 @@
       .cursor-dot, .cursor-ring { display: none; }
     }
 
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── TAP RIPPLE ── */
+    .ripple-container {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(122, 98, 72, 0.15);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to { transform: scale(4); opacity: 0; }
+    }
+
+    /* ── BUTTON TAP FEEDBACK ── */
+    .form-row button {
+      transition: transform 0.15s ease, color 0.3s ease;
+    }
+    .form-row button:active {
+      transform: scale(0.95);
+    }
+
+    /* ── 60FPS SCROLL PERFORMANCE ── */
+    .hero, .notify, footer {
+      will-change: transform;
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+
+    /* ── iOS SAFE AREA ── */
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      footer {
+        padding-bottom: calc(32px + env(safe-area-inset-bottom));
+      }
+      @media (max-width: 768px) {
+        footer {
+          padding-bottom: calc(28px + env(safe-area-inset-bottom));
+        }
+      }
+    }
+
+    /* ── KEYBOARD AWARE FORM ── */
+    .notify.keyboard-up {
+      padding-bottom: 40px;
+    }
+
     /* ── FOOTER ── */
     footer {
       padding: 32px 48px;
@@ -653,11 +723,11 @@
 
   <!-- HERO -->
   <section class="hero">
-    <p class="hero-eyebrow">A New York City Design Studio</p>
-    <h1 class="hero-title">Coming<br/>Soon</h1>
-    <p class="hero-tagline">Something rare is being made.</p>
+    <p class="hero-eyebrow reveal">A New York City Design Studio</p>
+    <h1 class="hero-title reveal reveal-delay-1">Coming<br/>Soon</h1>
+    <p class="hero-tagline reveal reveal-delay-2">Something rare is being made.</p>
 
-    <div class="countdown">
+    <div class="countdown reveal reveal-delay-3">
       <div class="countdown-unit">
         <span class="countdown-number" id="cd-days">00</span>
         <span class="countdown-label">Days</span>
@@ -684,13 +754,13 @@
   <!-- NOTIFY -->
   <section class="notify">
     <div class="notify-inner">
-      <p class="notify-eyebrow">Be the First to Know</p>
-      <h2 class="notify-heading">Stay in<br/>the loop.</h2>
-      <p class="notify-sub">Enter your email or phone number to receive<br/>exclusive updates on our launch.</p>
+      <p class="notify-eyebrow reveal">Be the First to Know</p>
+      <h2 class="notify-heading reveal reveal-delay-1">Stay in<br/>the loop.</h2>
+      <p class="notify-sub reveal reveal-delay-2">Enter your email or phone number to receive<br/>exclusive updates on our launch.</p>
 
-      <form onsubmit="handleSubmit(event)">
+      <form onsubmit="handleSubmit(event)" class="reveal reveal-delay-3">
         <div class="form-row" id="form-row">
-          <input type="text" id="contact" placeholder="Email or phone number" autocomplete="off" />
+          <input type="text" id="contact" placeholder="Email or phone number" autocomplete="off" inputmode="email" />
           <button type="submit">Notify Me</button>
         </div>
         <p class="form-note">No spam. Ever. Unsubscribe at any time.</p>
@@ -810,6 +880,69 @@
       dot.style.opacity  = '1';
       ring.style.opacity = '1';
     });
+
+    // ── SCROLL REVEAL ──
+    const revealEls = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
+
+    // Stagger hero elements on load immediately
+    window.addEventListener('load', () => {
+      document.querySelectorAll('.hero .reveal').forEach((el, i) => {
+        setTimeout(() => el.classList.add('revealed'), i * 120);
+      });
+      // Observe all others for scroll reveal
+      document.querySelectorAll('.notify .reveal, footer .reveal').forEach(el => {
+        revealObserver.observe(el);
+      });
+    });
+
+    // ── TAP RIPPLE ──
+    function addRipple(e) {
+      const el = e.currentTarget;
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left - size / 2;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top  - size / 2;
+      const ripple = document.createElement('span');
+      ripple.classList.add('ripple-wave');
+      ripple.style.cssText = `width:${size}px;height:${size}px;left:${x}px;top:${y}px`;
+      el.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove());
+    }
+    document.querySelectorAll('.form-row button, footer a, .nav-brand').forEach(el => {
+      el.classList.add('ripple-container');
+      el.addEventListener('touchstart', addRipple, { passive: true });
+      el.addEventListener('mousedown', addRipple);
+    });
+
+    // ── SMART INPUT TYPE ──
+    const contactInput = document.getElementById('contact');
+    contactInput.addEventListener('input', () => {
+      const val = contactInput.value.trim();
+      const isPhone = /^[\d\s\(\)\+\-]/.test(val);
+      contactInput.setAttribute('inputmode', isPhone ? 'tel' : 'email');
+    });
+
+    // ── KEYBOARD AWARE FORM ──
+    if (window.visualViewport) {
+      const notifySection = document.querySelector('.notify');
+      window.visualViewport.addEventListener('resize', () => {
+        const keyboardUp = window.visualViewport.height < window.innerHeight * 0.75;
+        notifySection.classList.toggle('keyboard-up', keyboardUp);
+        if (keyboardUp) {
+          setTimeout(() => {
+            contactInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      });
+    }
 
     // ── PARALLAX on hero title ──
     document.addEventListener('mousemove', (e) => {
