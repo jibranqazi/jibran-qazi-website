@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Members — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sand: #ede0cc;
+      --deep: #d4c4a8;
+      --black: #111110;
+      --mid: #888885;
+      --light: #ddd8cf;
+    }
+
+    body {
+      background: var(--sand);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    body.visible { opacity: 1; }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--light);
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .member-badge {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      border: 1px solid var(--light);
+      padding: 5px 12px;
+    }
+
+    .signout-btn {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: color 0.2s;
+    }
+
+    .signout-btn:hover { color: var(--black); }
+
+    /* ── Main ── */
+    main {
+      max-width: 840px;
+      margin: 0 auto;
+      padding: 80px 48px;
+    }
+
+    /* ── Welcome ── */
+    .welcome-section {
+      margin-bottom: 72px;
+    }
+
+    .welcome-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 16px;
+    }
+
+    .welcome-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(40px, 6vw, 64px);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+
+    .welcome-note {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--mid);
+      letter-spacing: 0.03em;
+      max-width: 520px;
+    }
+
+    /* ── Status card ── */
+    .status-strip {
+      background: var(--black);
+      color: var(--sand);
+      padding: 28px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 72px;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .status-label {
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 6px;
+    }
+
+    .status-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Countdown ── */
+    .countdown-section {
+      margin-bottom: 72px;
+    }
+
+    .section-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 300;
+      margin-bottom: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    .section-desc {
+      font-size: 13px;
+      color: var(--mid);
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+      margin-bottom: 32px;
+      max-width: 480px;
+    }
+
+    .countdown-grid {
+      display: flex;
+      gap: 2px;
+    }
+
+    .countdown-unit {
+      background: #f9f6f0;
+      border: 1px solid var(--light);
+      padding: 24px 28px;
+      text-align: center;
+      min-width: 90px;
+    }
+
+    .countdown-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 40px;
+      font-weight: 300;
+      line-height: 1;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .countdown-lbl {
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+
+    /* ── Divider ── */
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--light);
+      margin: 0 0 56px 0;
+    }
+
+    /* ── Journal section ── */
+    .journal-section {
+      margin-bottom: 72px;
+    }
+
+    .post-list { list-style: none; }
+
+    .post-item {
+      border-bottom: 1px solid var(--light);
+    }
+
+    .post-link {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 24px 0;
+      text-decoration: none;
+      color: var(--black);
+      gap: 16px;
+      transition: opacity 0.2s;
+    }
+
+    .post-link:hover { opacity: 0.6; }
+
+    .post-title-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+    }
+
+    .post-meta {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--mid);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .empty-journal {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--mid);
+      padding: 32px 0;
+    }
+
+    /* ── Member count ── */
+    .member-count-note {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--mid);
+      text-align: center;
+      padding: 48px 0 0;
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 20px 24px; }
+      main { padding: 48px 24px; }
+      .countdown-grid { gap: 2px; }
+      .countdown-unit { padding: 18px 16px; min-width: 70px; }
+      .countdown-num { font-size: 30px; }
+      .status-strip { padding: 24px; }
+      .member-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="wordmark">Jibran Qazi</a>
+    <div class="header-right">
+      <span class="member-badge">Early Access</span>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Welcome -->
+    <section class="welcome-section">
+      <p class="welcome-eyebrow">Member Area</p>
+      <h1 class="welcome-name" id="welcome-name">Welcome.</h1>
+      <p class="welcome-note">You're in before the world gets here. This space is yours — follow the process, read the journal, and be the first to know when everything launches.</p>
+    </section>
+
+    <!-- Status strip -->
+    <div class="status-strip">
+      <div>
+        <p class="status-label">Status</p>
+        <p class="status-value">Early Access Member</p>
+      </div>
+      <div>
+        <p class="status-label">Launch Date</p>
+        <p class="status-value">August 1, 2026</p>
+      </div>
+      <div>
+        <p class="status-label">Member Since</p>
+        <p class="status-value" id="member-since">—</p>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <section class="countdown-section">
+      <p class="section-eyebrow">Until Launch</p>
+      <h2 class="section-title">The clock is running.</h2>
+      <p class="section-desc">August 1, 2026. Everything this brand has been building toward. You're watching it happen in real time.</p>
+
+      <div class="countdown-grid">
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cd-days">—</span>
+          <span class="countdown-lbl">Days</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cd-hours">—</span>
+          <span class="countdown-lbl">Hours</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cd-mins">—</span>
+          <span class="countdown-lbl">Minutes</span>
+        </div>
+        <div class="countdown-unit">
+          <span class="countdown-num" id="cd-secs">—</span>
+          <span class="countdown-lbl">Seconds</span>
+        </div>
+      </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <!-- Journal -->
+    <section class="journal-section">
+      <p class="section-eyebrow">From the Journal</p>
+      <h2 class="section-title">Latest entries.</h2>
+      <ul class="post-list" id="post-list">
+        <li><p class="empty-journal">The first entry is being written.</p></li>
+      </ul>
+    </section>
+
+    <p class="member-count-note" id="member-count-note"></p>
+
+  </main>
+
+  <script>
+    const token = localStorage.getItem('jq_access');
+    if (!token) window.location.href = '/signin';
+
+    // Load user info
+    async function loadUser() {
+      try {
+        const res = await fetch('/auth/me', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { localStorage.removeItem('jq_access'); window.location.href = '/signin'; return; }
+        const user = await res.json();
+        const firstName = (user.name || '').split(' ')[0] || 'Member';
+        document.getElementById('welcome-name').textContent = 'Welcome, ' + firstName + '.';
+
+        // Member since — use account creation from JWT
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const since = new Date(payload.iat * 1000);
+        document.getElementById('member-since').textContent = since.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      } catch {}
+      document.body.classList.add('visible');
+    }
+
+    // Load journal posts
+    async function loadPosts() {
+      try {
+        const res = await fetch('/api/posts');
+        const posts = await res.json();
+        if (!posts.length) return;
+        const list = document.getElementById('post-list');
+        list.innerHTML = posts.slice(0, 5).map(p => `
+          <li class="post-item">
+            <a href="/journal/${p.slug}" class="post-link">
+              <span class="post-title-text">${p.title}</span>
+              <span class="post-meta">${p.category} · ${fmtDate(p.date)}</span>
+            </a>
+          </li>
+        `).join('');
+      } catch {}
+    }
+
+    function fmtDate(d) {
+      if (!d) return '';
+      return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Countdown
+    function updateCountdown() {
+      const launch = new Date('2026-08-01T00:00:00');
+      const now = new Date();
+      const diff = launch - now;
+      if (diff <= 0) {
+        document.querySelector('.countdown-section').style.display = 'none';
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      document.getElementById('cd-days').textContent = String(days).padStart(2, '0');
+      document.getElementById('cd-hours').textContent = String(hours).padStart(2, '0');
+      document.getElementById('cd-mins').textContent = String(mins).padStart(2, '0');
+      document.getElementById('cd-secs').textContent = String(secs).padStart(2, '0');
+    }
+
+    async function signOut() {
+      try {
+        await fetch('/auth/signout', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+      } catch {}
+      localStorage.removeItem('jq_access');
+      localStorage.removeItem('jq_refresh');
+      window.location.href = '/';
+    }
+
+    loadUser();
+    loadPosts();
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
+
+</body>
+</html>

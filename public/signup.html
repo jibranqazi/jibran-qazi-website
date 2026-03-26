@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sand: #ede0cc;
+      --black: #111110;
+      --mid: #888885;
+      --light: #ddd8cf;
+      --error: #c0392b;
+    }
+
+    body {
+      background: var(--sand);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: #f9f6f0;
+      border: 1px solid var(--light);
+      padding: 52px 48px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: 8px;
+      letter-spacing: 0.01em;
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--mid);
+      margin-bottom: 36px;
+    }
+
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      background: transparent;
+      border: 1px solid var(--light);
+      border-radius: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--black);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input:focus { border-color: var(--black); }
+    input::placeholder { color: var(--mid); }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--black);
+      color: #f9f6f0;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: #333; }
+    .btn:disabled { background: var(--mid); cursor: not-allowed; }
+
+    .error-msg {
+      font-size: 12px;
+      color: var(--error);
+      margin-top: 12px;
+      letter-spacing: 0.02em;
+      min-height: 16px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--light);
+      margin: 28px 0;
+    }
+
+    .footer-link {
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--mid);
+    }
+
+    .footer-link a {
+      color: var(--black);
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+    }
+
+    .verify-note {
+      font-size: 12px;
+      color: var(--mid);
+      letter-spacing: 0.03em;
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    .verify-note strong {
+      color: var(--black);
+      font-weight: 400;
+    }
+
+    .resend-link {
+      font-size: 11px;
+      color: var(--mid);
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      text-decoration: underline;
+      margin-top: 12px;
+      display: block;
+      text-align: center;
+    }
+
+    .resend-link:hover { color: var(--black); }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .card { padding: 40px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="wordmark">Jibran Qazi</a>
+
+  <div class="card">
+
+    <!-- Step 1: Sign Up -->
+    <div class="step active" id="step-signup">
+      <h1 class="card-title">Become a member.</h1>
+      <p class="card-subtitle">Early access. No spam. Ever.</p>
+
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" id="name" placeholder="Your name" autocomplete="given-name" />
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="your@email.com" autocomplete="email" />
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="8+ characters" autocomplete="new-password" />
+      </div>
+
+      <button class="btn" id="signup-btn" onclick="doSignup()">Create Account</button>
+      <p class="error-msg" id="signup-error"></p>
+
+      <hr class="divider" />
+      <p class="footer-link">Already a member? <a href="/signin">Sign in</a></p>
+    </div>
+
+    <!-- Step 2: Verify Email -->
+    <div class="step" id="step-verify">
+      <h1 class="card-title">Check your email.</h1>
+      <p class="verify-note">We sent a 6-digit code to <strong id="verify-email-display"></strong>. Enter it below to confirm your account.</p>
+
+      <div class="field">
+        <label>Verification Code</label>
+        <input type="text" id="code" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+      </div>
+
+      <button class="btn" id="verify-btn" onclick="doVerify()">Confirm Account</button>
+      <p class="error-msg" id="verify-error"></p>
+
+      <button class="resend-link" onclick="resendCode()">Didn't receive it? Send again</button>
+    </div>
+
+  </div>
+
+  <script>
+    let pendingEmail = '';
+
+    async function doSignup() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('signup-btn');
+      const err = document.getElementById('signup-error');
+
+      err.textContent = '';
+
+      if (!name || !email || !password) { err.textContent = 'Please fill in all fields.'; return; }
+      if (password.length < 8) { err.textContent = 'Password must be at least 8 characters.'; return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Creating account...';
+
+      try {
+        const res = await fetch('/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) { err.textContent = data.error; btn.disabled = false; btn.textContent = 'Create Account'; return; }
+
+        pendingEmail = email;
+        document.getElementById('verify-email-display').textContent = email;
+        document.getElementById('step-signup').classList.remove('active');
+        document.getElementById('step-verify').classList.add('active');
+        document.getElementById('code').focus();
+
+      } catch {
+        err.textContent = 'Something went wrong. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+
+    async function doVerify() {
+      const code = document.getElementById('code').value.trim();
+      const btn = document.getElementById('verify-btn');
+      const err = document.getElementById('verify-error');
+
+      err.textContent = '';
+      if (!code || code.length < 6) { err.textContent = 'Please enter the 6-digit code.'; return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Verifying...';
+
+      try {
+        const res = await fetch('/auth/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail, code })
+        });
+        const data = await res.json();
+
+        if (!res.ok) { err.textContent = data.error; btn.disabled = false; btn.textContent = 'Confirm Account'; return; }
+
+        // Auto sign in after verification
+        const signinRes = await fetch('/auth/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail, password: document.getElementById('password').value })
+        });
+        const signinData = await signinRes.json();
+
+        if (signinRes.ok) {
+          localStorage.setItem('jq_access', signinData.accessToken);
+          localStorage.setItem('jq_refresh', signinData.refreshToken);
+        }
+
+        window.location.href = '/members';
+
+      } catch {
+        err.textContent = 'Something went wrong. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Confirm Account';
+      }
+    }
+
+    async function resendCode() {
+      if (!pendingEmail) return;
+      try {
+        await fetch('/auth/resend', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail })
+        });
+        document.getElementById('verify-error').textContent = 'New code sent.';
+        document.getElementById('verify-error').style.color = '#27ae60';
+      } catch {}
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('step-signup').classList.contains('active')) doSignup();
+        else doVerify();
+      }
+    });
+  </script>
+
+</body>
+</html>

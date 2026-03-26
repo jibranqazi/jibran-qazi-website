@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sand: #ede0cc;
+      --black: #111110;
+      --mid: #888885;
+      --light: #ddd8cf;
+      --error: #c0392b;
+    }
+
+    body {
+      background: var(--sand);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: #f9f6f0;
+      border: 1px solid var(--light);
+      padding: 52px 48px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 300;
+      margin-bottom: 8px;
+      letter-spacing: 0.01em;
+    }
+
+    .card-subtitle {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--mid);
+      margin-bottom: 36px;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      background: transparent;
+      border: 1px solid var(--light);
+      border-radius: 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--black);
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    input:focus { border-color: var(--black); }
+    input::placeholder { color: var(--mid); }
+
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--black);
+      color: #f9f6f0;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: #333; }
+    .btn:disabled { background: var(--mid); cursor: not-allowed; }
+
+    .error-msg {
+      font-size: 12px;
+      color: var(--error);
+      margin-top: 12px;
+      letter-spacing: 0.02em;
+      min-height: 16px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--light);
+      margin: 28px 0;
+    }
+
+    .footer-link {
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--mid);
+    }
+
+    .footer-link a {
+      color: var(--black);
+      text-decoration: none;
+      border-bottom: 1px solid currentColor;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 480px) {
+      .card { padding: 40px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="wordmark">Jibran Qazi</a>
+
+  <div class="card">
+    <h1 class="card-title">Welcome back.</h1>
+    <p class="card-subtitle">Members only</p>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email" />
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn" id="signin-btn" onclick="doSignin()">Sign In</button>
+    <p class="error-msg" id="signin-error"></p>
+
+    <hr class="divider" />
+    <p class="footer-link">Not a member yet? <a href="/signup">Join</a></p>
+  </div>
+
+  <script>
+    // If already signed in, redirect
+    if (localStorage.getItem('jq_access')) window.location.href = '/members';
+
+    async function doSignin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('signin-btn');
+      const err = document.getElementById('signin-error');
+
+      err.textContent = '';
+      if (!email || !password) { err.textContent = 'Please fill in all fields.'; return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Signing in...';
+
+      try {
+        const res = await fetch('/auth/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          err.textContent = data.error;
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+          return;
+        }
+
+        localStorage.setItem('jq_access', data.accessToken);
+        localStorage.setItem('jq_refresh', data.refreshToken);
+        window.location.href = '/members';
+
+      } catch {
+        err.textContent = 'Something went wrong. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doSignin();
+    });
+  </script>
+
+</body>
+</html>

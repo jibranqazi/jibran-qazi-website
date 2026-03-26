@@ -4,6 +4,8 @@ const fs = require('fs');
 const multer = require('multer');
 const { DynamoDBClient, CreateTableCommand, DescribeTableCommand } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { CognitoIdentityProviderClient, SignUpCommand: CognitoSignUpCommand, ConfirmSignUpCommand, InitiateAuthCommand, GlobalSignOutCommand, GetUserCommand, ResendConfirmationCodeCommand, ForgotPasswordCommand, ConfirmForgotPasswordCommand } = require('@aws-sdk/client-cognito-identity-provider');
+const { CognitoJwtVerifier } = require('aws-jwt-verify');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,6 +16,29 @@ const POSTS_TABLE = 'jibranqazi-posts';
 
 const client = new DynamoDBClient({ region: REGION });
 const db = DynamoDBDocumentClient.from(client);
+
+const COGNITO_USER_POOL_ID = 'us-east-1_U8ewOmecJ';
+const COGNITO_CLIENT_ID = '1vauub27u2tvlp33bs826e6q0v';
+
+const cognito = new CognitoIdentityProviderClient({ region: REGION });
+
+const jwtVerifier = CognitoJwtVerifier.create({
+  userPoolId: COGNITO_USER_POOL_ID,
+  tokenUse: 'access',
+  clientId: COGNITO_CLIENT_ID
+});
+
+async function requireMember(req, res, next) {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Authentication required.' });
+  try {
+    const payload = await jwtVerifier.verify(token);
+    req.user = payload;
+    next();
+  } catch {
+    res.status(401).json({ error: 'Session expired. Please sign in again.' });
+  }
+}
 
 // ── Multer (media uploads) ────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -241,6 +266,104 @@ app.get('/api/posts/:slug', async (req, res) => {
     res.json(result.Item);
   } catch {
     res.status(500).json({ error: 'Error loading post' });
+  }
+});
+
+// ── Auth routes ───────────────────────────────────────────────────
+app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
+app.get('/signin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signin.html')));
+app.get('/members', (req, res) => res.sendFile(path.join(__dirname, 'public', 'members.html')));
+
+app.post('/auth/signup', async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password) return res.status(400).json({ error: 'All fields are required.' });
+  try {
+    await cognito.send(new CognitoSignUpCommand({
+      ClientId: COGNITO_CLIENT_ID,
+      Username: email,
+      Password: password,
+      UserAttributes: [{ Name: 'name', Value: name }]
+    }));
+    res.json({ message: 'Check your email for your verification code.' });
+  } catch (err) {
+    const msg = err.name === 'UsernameExistsException'
+      ? 'An account with this email already exists.'
+      : err.message;
+    res.status(400).json({ error: msg });
+  }
+});
+
+app.post('/auth/verify', async (req, res) => {
+  const { email, code } = req.body;
+  try {
+    await cognito.send(new ConfirmSignUpCommand({
+      ClientId: COGNITO_CLIENT_ID,
+      Username: email,
+      ConfirmationCode: code
+    }));
+    res.json({ message: 'Email verified. Welcome.' });
+  } catch (err) {
+    const msg = err.name === 'CodeMismatchException'
+      ? 'Incorrect code. Please try again.'
+      : err.name === 'ExpiredCodeException'
+      ? 'Code expired. Please request a new one.'
+      : err.message;
+    res.status(400).json({ error: msg });
+  }
+});
+
+app.post('/auth/resend', async (req, res) => {
+  const { email } = req.body;
+  try {
+    await cognito.send(new ResendConfirmationCodeCommand({ ClientId: COGNITO_CLIENT_ID, Username: email }));
+    res.json({ message: 'New code sent.' });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.post('/auth/signin', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
+  try {
+    const result = await cognito.send(new InitiateAuthCommand({
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: COGNITO_CLIENT_ID,
+      AuthParameters: { USERNAME: email, PASSWORD: password }
+    }));
+    res.json({
+      accessToken: result.AuthenticationResult.AccessToken,
+      refreshToken: result.AuthenticationResult.RefreshToken,
+      idToken: result.AuthenticationResult.IdToken,
+      expiresIn: result.AuthenticationResult.ExpiresIn
+    });
+  } catch (err) {
+    const msg = err.name === 'NotAuthorizedException'
+      ? 'Incorrect email or password.'
+      : err.name === 'UserNotConfirmedException'
+      ? 'Please verify your email first.'
+      : err.message;
+    res.status(401).json({ error: msg });
+  }
+});
+
+app.post('/auth/signout', async (req, res) => {
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  try {
+    if (token) await cognito.send(new GlobalSignOutCommand({ AccessToken: token }));
+  } catch {}
+  res.json({ message: 'Signed out.' });
+});
+
+app.get('/auth/me', requireMember, async (req, res) => {
+  try {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    const result = await cognito.send(new GetUserCommand({ AccessToken: token }));
+    const attrs = {};
+    result.UserAttributes.forEach(a => { attrs[a.Name] = a.Value; });
+    res.json({ email: attrs.email, name: attrs.name, sub: attrs.sub, memberSince: attrs['custom:memberSince'] || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
