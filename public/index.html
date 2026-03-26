@@ -916,9 +916,12 @@
   <!-- NAV -->
   <nav>
     <div class="nav-brand">Jibran Qazi</div>
-    <button class="nav-menu-btn" id="menuBtn" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="nav-right" style="display:flex;align-items:center;gap:28px;">
+      <a href="/signin" id="nav-auth-link" style="font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--mid);text-decoration:none;transition:color 0.3s ease;">Sign In</a>
+      <button class="nav-menu-btn" id="menuBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </nav>
 
   <!-- HERO -->
@@ -1179,6 +1182,14 @@
         .catch(() => {});
     })();
 
+    // ── NAV AUTH LINK ──
+    const authLink = document.getElementById('nav-auth-link');
+    if (localStorage.getItem('jq_access')) {
+      authLink.textContent = 'Members →';
+      authLink.href = '/members';
+      authLink.style.color = 'var(--black)';
+    }
+
     // ── HAMBURGER MENU ──
     const menuBtn = document.getElementById('menuBtn');
     const navOverlay = document.getElementById('navOverlay');
@@ -1186,6 +1197,8 @@
       const isOpen = navOverlay.classList.toggle('open');
       menuBtn.classList.toggle('open', isOpen);
       document.body.style.overflow = isOpen ? 'hidden' : '';
+      authLink.style.opacity = isOpen ? '0' : '1';
+      authLink.style.pointerEvents = isOpen ? 'none' : 'auto';
     });
     navOverlay.querySelectorAll('.nav-overlay-link').forEach(link => {
       link.addEventListener('click', () => {
