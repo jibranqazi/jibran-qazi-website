@@ -701,6 +701,9 @@ app.post('/api/community/comments/:id/upvote', requireMember, async (req, res) =
   }
 });
 
+// ── Version probe ────────────────────────────────────────────────
+app.get('/v', (req, res) => res.json({ v: 2 }));
+
 // ── Catch-all ─────────────────────────────────────────────────────
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
