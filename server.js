@@ -24,8 +24,30 @@ const COGNITO_CLIENT_ID = '1vauub27u2tvlp33bs826e6q0v';
 const cognito = new CognitoIdentityProviderClient({ region: REGION });
 const ses = new SESv2Client({ region: REGION });
 
-async function sendWelcomeEmail(toEmail) {
-  const html = `<!DOCTYPE html>
+function buildWelcomeEmailHtml(withPromo) {
+  const promoBlock = withPromo ? `
+              <!-- Promo code block -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:#1a1008;padding:40px 32px;text-align:center;">
+                    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#c8a97e;">Your exclusive offer</p>
+                    <p style="margin:0 0 20px;font-size:36px;font-weight:400;letter-spacing:0.18em;color:#faf6f1;">$15 OFF</p>
+                    <p style="margin:0 0 24px;font-size:13px;color:#a89070;line-height:1.6;">Any order &nbsp;·&nbsp; No minimum &nbsp;·&nbsp; No expiry</p>
+                    <div style="display:inline-block;border:1px solid #c8a97e;padding:14px 32px;">
+                      <span style="font-size:18px;letter-spacing:0.3em;text-transform:uppercase;color:#c8a97e;">WELCOME15</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:40px 0 0;font-size:14px;line-height:1.8;color:#6b5740;font-style:italic;">
+                Apply this code at checkout when you are ready.
+              </p>` : '';
+
+  const promoPara = withPromo
+    ? `<p style="margin:0 0 40px;font-size:15px;line-height:1.8;color:#1a1008;">As a founding subscriber, we would like to offer you something in return.</p>`
+    : '';
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -50,36 +72,17 @@ async function sendWelcomeEmail(toEmail) {
           <tr>
             <td style="padding:48px 0 40px;">
               <p style="margin:0 0 28px;font-size:15px;line-height:1.8;color:#1a1008;">
-                Thank you for joining us before we open. You are among the very first.
+                Thank you for joining us before we open. You are among the first.
               </p>
               <p style="margin:0 0 28px;font-size:15px;line-height:1.8;color:#1a1008;">
                 Something rare is being made — and when we launch on <strong style="font-weight:600;">August 1, 2026</strong>, you will be the first to know.
               </p>
-              <p style="margin:0 0 40px;font-size:15px;line-height:1.8;color:#1a1008;">
-                As a founding subscriber, we would like to offer you something in return.
-              </p>
-
-              <!-- Promo code block -->
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background:#1a1008;padding:40px 32px;text-align:center;">
-                    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#c8a97e;">Your exclusive offer</p>
-                    <p style="margin:0 0 20px;font-size:36px;font-weight:400;letter-spacing:0.18em;color:#faf6f1;">$15 OFF</p>
-                    <p style="margin:0 0 24px;font-size:13px;color:#a89070;line-height:1.6;">Any order &nbsp;·&nbsp; No minimum &nbsp;·&nbsp; No expiry</p>
-                    <div style="display:inline-block;border:1px solid #c8a97e;padding:14px 32px;">
-                      <span style="font-size:18px;letter-spacing:0.3em;text-transform:uppercase;color:#c8a97e;">WELCOME15</span>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin:40px 0 0;font-size:14px;line-height:1.8;color:#6b5740;font-style:italic;">
-                Apply this code at checkout when you are ready.
-              </p>
+              ${promoPara}
+              ${promoBlock}
             </td>
           </tr>
 
-          <!-- Divider -->
+          <!-- Footer -->
           <tr>
             <td style="border-top:1px solid #d9c9b4;padding-top:36px;text-align:center;">
               <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8c7355;">Jibran Qazi</p>
@@ -96,6 +99,13 @@ async function sendWelcomeEmail(toEmail) {
   </table>
 </body>
 </html>`;
+}
+
+async function sendWelcomeEmail(toEmail, withPromo) {
+  const html = buildWelcomeEmailHtml(withPromo);
+  const promoText = withPromo
+    ? `\n\nAs a founding subscriber, here is $15 off any order — no minimum, no expiry.\n\nYour code: WELCOME15\n\nApply it at checkout when you are ready.`
+    : '';
 
   await ses.send(new SendEmailCommand({
     FromEmailAddress: 'Jibran Qazi <Jibran@jibranqazi.com>',
@@ -105,7 +115,7 @@ async function sendWelcomeEmail(toEmail) {
         Subject: { Data: 'You\'re on the list — Jibran Qazi' },
         Body: {
           Html: { Data: html },
-          Text: { Data: `Thank you for joining us.\n\nSomething rare is being made. When we launch on August 1, 2026, you will be the first to know.\n\nAs a founding subscriber, here is $15 off any order — no minimum, no expiry.\n\nYour code: WELCOME15\n\nApply it at checkout when you are ready.\n\n— Jibran Qazi\njibranqazi.com` }
+          Text: { Data: `Thank you for joining us.\n\nSomething rare is being made. When we launch on August 1, 2026, you will be the first to know.${promoText}\n\n— Jibran Qazi\njibranqazi.com` }
         }
       }
     }
@@ -202,7 +212,9 @@ app.post('/subscribe', async (req, res) => {
       ConditionExpression: 'attribute_not_exists(contact)'
     }));
     if (isEmail) {
-      sendWelcomeEmail(val).catch(err => console.error('Welcome email failed:', err.message));
+      db.send(new ScanCommand({ TableName: TABLE, Select: 'COUNT' }))
+        .then(r => sendWelcomeEmail(val, r.Count <= 50))
+        .catch(err => console.error('Welcome email failed:', err.message));
     }
     res.status(201).json({ message: 'Subscribed successfully.' });
   } catch (err) {
