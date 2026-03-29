@@ -17,7 +17,9 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd ~/app
-            git pull origin main
+            git fetch origin
+            git reset --hard origin/main
             npm install --production
             pm2 restart jibran-qazi
