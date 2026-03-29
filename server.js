@@ -6,6 +6,7 @@ const { DynamoDBClient, CreateTableCommand, DescribeTableCommand } = require('@a
 const { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const { CognitoIdentityProviderClient, SignUpCommand: CognitoSignUpCommand, ConfirmSignUpCommand, InitiateAuthCommand, GlobalSignOutCommand, GetUserCommand, ResendConfirmationCodeCommand, ForgotPasswordCommand, ConfirmForgotPasswordCommand } = require('@aws-sdk/client-cognito-identity-provider');
 const { CognitoJwtVerifier } = require('aws-jwt-verify');
+const { SESv2Client, SendEmailCommand } = require('@aws-sdk/client-sesv2');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +22,95 @@ const COGNITO_USER_POOL_ID = 'us-east-1_U8ewOmecJ';
 const COGNITO_CLIENT_ID = '1vauub27u2tvlp33bs826e6q0v';
 
 const cognito = new CognitoIdentityProviderClient({ region: REGION });
+const ses = new SESv2Client({ region: REGION });
+
+async function sendWelcomeEmail(toEmail) {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Welcome — Jibran Qazi</title>
+</head>
+<body style="margin:0;padding:0;background:#faf6f1;font-family:Georgia,'Times New Roman',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf6f1;padding:60px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding-bottom:48px;text-align:center;border-bottom:1px solid #d9c9b4;">
+              <p style="margin:0;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#8c7355;">New York City</p>
+              <h1 style="margin:12px 0 0;font-size:32px;font-weight:400;letter-spacing:0.12em;text-transform:uppercase;color:#1a1008;">Jibran Qazi</h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:48px 0 40px;">
+              <p style="margin:0 0 28px;font-size:15px;line-height:1.8;color:#1a1008;">
+                Thank you for joining us before we open. You are among the very first.
+              </p>
+              <p style="margin:0 0 28px;font-size:15px;line-height:1.8;color:#1a1008;">
+                Something rare is being made — and when we launch on <strong style="font-weight:600;">August 1, 2026</strong>, you will be the first to know.
+              </p>
+              <p style="margin:0 0 40px;font-size:15px;line-height:1.8;color:#1a1008;">
+                As a founding subscriber, we would like to offer you something in return.
+              </p>
+
+              <!-- Promo code block -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:#1a1008;padding:40px 32px;text-align:center;">
+                    <p style="margin:0 0 8px;font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#c8a97e;">Your exclusive offer</p>
+                    <p style="margin:0 0 20px;font-size:36px;font-weight:400;letter-spacing:0.18em;color:#faf6f1;">$15 OFF</p>
+                    <p style="margin:0 0 24px;font-size:13px;color:#a89070;line-height:1.6;">Any order &nbsp;·&nbsp; No minimum &nbsp;·&nbsp; No expiry</p>
+                    <div style="display:inline-block;border:1px solid #c8a97e;padding:14px 32px;">
+                      <span style="font-size:18px;letter-spacing:0.3em;text-transform:uppercase;color:#c8a97e;">WELCOME15</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:40px 0 0;font-size:14px;line-height:1.8;color:#6b5740;font-style:italic;">
+                Apply this code at checkout when you are ready.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="border-top:1px solid #d9c9b4;padding-top:36px;text-align:center;">
+              <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8c7355;">Jibran Qazi</p>
+              <p style="margin:0;font-size:12px;color:#a89070;">A New York City Design Studio</p>
+              <p style="margin:16px 0 0;font-size:11px;color:#c4b49a;">
+                <a href="https://jibranqazi.com" style="color:#c4b49a;text-decoration:none;">jibranqazi.com</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  await ses.send(new SendEmailCommand({
+    FromEmailAddress: 'Jibran Qazi <Jibran@jibranqazi.com>',
+    Destination: { ToAddresses: [toEmail] },
+    Content: {
+      Simple: {
+        Subject: { Data: 'You\'re on the list — Jibran Qazi' },
+        Body: {
+          Html: { Data: html },
+          Text: { Data: `Thank you for joining us.\n\nSomething rare is being made. When we launch on August 1, 2026, you will be the first to know.\n\nAs a founding subscriber, here is $15 off any order — no minimum, no expiry.\n\nYour code: WELCOME15\n\nApply it at checkout when you are ready.\n\n— Jibran Qazi\njibranqazi.com` }
+        }
+      }
+    }
+  }));
+}
 
 const jwtVerifier = CognitoJwtVerifier.create({
   userPoolId: COGNITO_USER_POOL_ID,
@@ -111,6 +201,9 @@ app.post('/subscribe', async (req, res) => {
       Item: { contact: val, type: isEmail ? 'email' : 'phone', subscribedAt: new Date().toISOString() },
       ConditionExpression: 'attribute_not_exists(contact)'
     }));
+    if (isEmail) {
+      sendWelcomeEmail(val).catch(err => console.error('Welcome email failed:', err.message));
+    }
     res.status(201).json({ message: 'Subscribed successfully.' });
   } catch (err) {
     if (err.name === 'ConditionalCheckFailedException') {
