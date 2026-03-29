@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discussion — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sand: #ede0cc;
+      --deep: #d4c4a8;
+      --black: #111110;
+      --mid: #888885;
+      --light: #ddd8cf;
+    }
+
+    body {
+      background: var(--sand);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    body.visible { opacity: 1; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--light);
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+    }
+
+    .header-right { display: flex; align-items: center; gap: 24px; }
+
+    .nav-link {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--black); }
+
+    .nav-btn {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: color 0.2s;
+    }
+    .nav-btn:hover { color: var(--black); }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 64px 48px 100px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      margin-bottom: 48px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--black); }
+
+    /* ── Post ── */
+    .post-section { margin-bottom: 56px; }
+
+    .post-header {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 28px;
+    }
+
+    .upvote-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 28px;
+      flex-shrink: 0;
+      padding-top: 6px;
+    }
+
+    .upvote-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mid);
+      font-size: 13px;
+      padding: 2px 4px;
+      line-height: 1;
+      transition: color 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .upvote-btn:hover, .upvote-btn.voted { color: var(--black); }
+
+    .upvote-count {
+      font-size: 11px;
+      color: var(--mid);
+    }
+
+    .post-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 300;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    .post-body {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--black);
+      margin-bottom: 24px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .post-meta {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+
+    .karma-tag {
+      display: inline-block;
+      background: var(--deep);
+      color: var(--black);
+      padding: 1px 7px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      margin-left: 2px;
+    }
+
+    /* ── Comment form ── */
+    .comment-form-section {
+      border-top: 1px solid var(--light);
+      padding-top: 48px;
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 20px;
+    }
+
+    .comment-textarea {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--light);
+      width: 100%;
+      padding: 0 0 14px;
+      color: var(--black);
+      outline: none;
+      resize: none;
+      line-height: 1.8;
+      min-height: 80px;
+      display: block;
+      margin-bottom: 20px;
+      transition: border-color 0.2s;
+    }
+    .comment-textarea:focus { border-bottom-color: var(--black); }
+    .comment-textarea::placeholder { color: var(--mid); }
+
+    .form-actions { display: flex; gap: 16px; align-items: center; }
+
+    .btn-primary {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--sand);
+      background: var(--black);
+      border: 1px solid var(--black);
+      padding: 11px 22px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.75; }
+
+    .btn-ghost {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--black); }
+
+    .form-error {
+      font-size: 11px;
+      color: #b04040;
+      margin-left: auto;
+    }
+
+    .sign-in-nudge {
+      font-size: 12px;
+      color: var(--mid);
+      letter-spacing: 0.05em;
+      padding: 20px 0;
+    }
+    .sign-in-nudge a { color: var(--black); text-decoration: none; border-bottom: 1px solid var(--mid); }
+
+    /* ── Comments ── */
+    .comments-section { border-top: 1px solid var(--light); padding-top: 48px; }
+
+    .comments-count {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      margin-bottom: 36px;
+    }
+
+    .comment {
+      display: flex;
+      gap: 16px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--light);
+    }
+
+    .comment.reply {
+      margin-left: 44px;
+      border-bottom: 1px solid rgba(221,216,207,0.5);
+    }
+    .comment.reply:last-child { border-bottom: none; }
+
+    .comment-upvote-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 24px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .comment-upvote-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mid);
+      font-size: 11px;
+      padding: 1px 3px;
+      line-height: 1;
+      transition: color 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .comment-upvote-btn:hover, .comment-upvote-btn.voted { color: var(--black); }
+
+    .comment-upvote-count { font-size: 10px; color: var(--mid); }
+
+    .comment-body-col { flex: 1; }
+
+    .comment-meta {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 10px;
+    }
+
+    .comment-text {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--black);
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .reply-btn {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .reply-btn:hover { color: var(--black); }
+
+    .inline-reply-form {
+      margin-top: 16px;
+      display: none;
+    }
+    .inline-reply-form.open { display: block; }
+
+    .inline-reply-form textarea {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--light);
+      width: 100%;
+      padding: 0 0 12px;
+      color: var(--black);
+      outline: none;
+      resize: none;
+      line-height: 1.7;
+      min-height: 60px;
+      margin-bottom: 14px;
+      display: block;
+    }
+    .inline-reply-form textarea::placeholder { color: var(--mid); }
+    .inline-reply-form textarea:focus { border-bottom-color: var(--black); }
+
+    .replies-block { margin-top: 4px; }
+
+    .no-comments {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--mid);
+      padding: 16px 0 48px;
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 20px 24px; }
+      main { padding: 40px 24px 80px; }
+      .comment.reply { margin-left: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="wordmark">Jibran Qazi</a>
+    <div class="header-right">
+      <a href="/members" class="nav-link" id="members-link" style="display:none">Members →</a>
+      <button class="nav-btn" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+      <a href="/signin" class="nav-link" id="signin-link">Sign In</a>
+    </div>
+  </header>
+
+  <main>
+    <a href="/community" class="back-link">← Community</a>
+
+    <div id="post-section"></div>
+    <div id="comment-form-section"></div>
+    <div id="comments-section"></div>
+  </main>
+
+  <script>
+    const token = localStorage.getItem('jq_access');
+    const postId = location.pathname.split('/')[2];
+    const votedPosts    = new Set(JSON.parse(localStorage.getItem('jq_voted_posts') || '[]'));
+    const votedComments = new Set(JSON.parse(localStorage.getItem('jq_voted_comments') || '[]'));
+    let isSignedIn = false;
+    let currentUser = null;
+
+    function esc(s) {
+      return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function timeAgo(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return m + 'm ago';
+      const h = Math.floor(m / 60);
+      if (h < 24) return h + 'h ago';
+      const d = Math.floor(h / 24);
+      if (d < 30) return d + 'd ago';
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    async function initAuth() {
+      if (token) {
+        try {
+          const res = await fetch('/auth/me', { headers: { Authorization: 'Bearer ' + token } });
+          if (res.ok) {
+            currentUser = await res.json();
+            isSignedIn = true;
+            document.getElementById('members-link').style.display = '';
+            document.getElementById('signout-btn').style.display = '';
+            document.getElementById('signin-link').style.display = 'none';
+          }
+        } catch {}
+      }
+    }
+
+    async function loadPage() {
+      await initAuth();
+      await Promise.all([loadPost(), loadComments()]);
+      document.body.classList.add('visible');
+    }
+
+    async function loadPost() {
+      try {
+        const res = await fetch(`/api/community/posts/${postId}`);
+        if (!res.ok) { document.getElementById('post-section').innerHTML = '<p style="color:var(--mid);padding:40px 0">Post not found.</p>'; return; }
+        const post = await res.json();
+        document.title = post.title + ' — Jibran Qazi';
+        const voted = votedPosts.has(post.id);
+        document.getElementById('post-section').innerHTML = `
+          <div class="post-section">
+            <div class="post-header">
+              <div class="upvote-col">
+                <button class="upvote-btn${voted ? ' voted' : ''}" id="post-upvote-btn" onclick="upvotePost('${esc(post.id)}',this)" title="Upvote">▲</button>
+                <span class="upvote-count" id="post-upvote-count">${post.upvotes || 0}</span>
+              </div>
+              <h1 class="post-title">${esc(post.title)}</h1>
+            </div>
+            <p class="post-body">${esc(post.body)}</p>
+            <p class="post-meta">
+              ${esc(post.authorName)}<span class="karma-tag">↑${post.authorKarma || 0}</span> · ${timeAgo(post.createdAt)}
+            </p>
+          </div>`;
+
+        // Comment form
+        document.getElementById('comment-form-section').innerHTML = isSignedIn
+          ? `<div class="comment-form-section">
+              <p class="section-label">Leave a Comment</p>
+              <textarea class="comment-textarea" id="comment-body" placeholder="Share your thoughts..."></textarea>
+              <div class="form-actions">
+                <button class="btn-primary" onclick="submitComment(null)">Post Comment</button>
+                <span class="form-error" id="comment-error"></span>
+              </div>
+            </div>`
+          : `<div class="comment-form-section">
+              <p class="sign-in-nudge"><a href="/signin">Sign in</a> to join the discussion.</p>
+            </div>`;
+      } catch {
+        document.getElementById('post-section').innerHTML = '<p style="color:var(--mid);padding:40px 0">Could not load post.</p>';
+      }
+    }
+
+    async function loadComments() {
+      try {
+        const res = await fetch(`/api/community/posts/${postId}/comments`);
+        const comments = await res.json();
+        renderComments(comments);
+      } catch {
+        document.getElementById('comments-section').innerHTML = '<p style="color:var(--mid)">Could not load comments.</p>';
+      }
+    }
+
+    function renderComments(comments) {
+      const topLevel = comments.filter(c => !c.parentId);
+      const replies  = comments.filter(c => c.parentId);
+      const count = comments.length;
+
+      if (!count) {
+        document.getElementById('comments-section').innerHTML = `
+          <div class="comments-section">
+            <p class="comments-count">0 Comments</p>
+            <p class="no-comments">Be the first to say something.</p>
+          </div>`;
+        return;
+      }
+
+      const html = topLevel.map(c => {
+        const cReplies = replies.filter(r => r.parentId === c.id);
+        return renderComment(c, false) + (cReplies.length
+          ? `<div class="replies-block">${cReplies.map(r => renderComment(r, true)).join('')}</div>`
+          : '');
+      }).join('');
+
+      document.getElementById('comments-section').innerHTML = `
+        <div class="comments-section">
+          <p class="comments-count">${count} Comment${count !== 1 ? 's' : ''}</p>
+          ${html}
+        </div>`;
+    }
+
+    function renderComment(c, isReply) {
+      const voted = votedComments.has(c.id);
+      const replyBtn = (!isReply && isSignedIn)
+        ? `<button class="reply-btn" onclick="toggleReply('${esc(c.id)}')">Reply</button>` : '';
+      const replyForm = (!isReply && isSignedIn)
+        ? `<div class="inline-reply-form" id="reply-form-${esc(c.id)}">
+            <textarea placeholder="Write a reply..." id="reply-text-${esc(c.id)}"></textarea>
+            <div class="form-actions">
+              <button class="btn-primary" onclick="submitComment('${esc(c.id)}')">Post Reply</button>
+              <button class="btn-ghost" onclick="toggleReply('${esc(c.id)}')">Cancel</button>
+              <span class="form-error" id="reply-error-${esc(c.id)}"></span>
+            </div>
+          </div>` : '';
+
+      return `<div class="comment${isReply ? ' reply' : ''}">
+        <div class="comment-upvote-col">
+          <button class="comment-upvote-btn${voted ? ' voted' : ''}" onclick="upvoteComment('${esc(c.id)}',this)" title="Upvote">▲</button>
+          <span class="comment-upvote-count" id="cup-${esc(c.id)}">${c.upvotes || 0}</span>
+        </div>
+        <div class="comment-body-col">
+          <p class="comment-meta">${esc(c.authorName)}<span class="karma-tag">↑${c.authorKarma || 0}</span> · ${timeAgo(c.createdAt)}</p>
+          <p class="comment-text">${esc(c.body)}</p>
+          ${replyBtn}
+          ${replyForm}
+        </div>
+      </div>`;
+    }
+
+    function toggleReply(commentId) {
+      const form = document.getElementById(`reply-form-${commentId}`);
+      const isOpen = form.classList.contains('open');
+      form.classList.toggle('open', !isOpen);
+      if (!isOpen) form.querySelector('textarea').focus();
+    }
+
+    async function upvotePost(pid, btn) {
+      if (!isSignedIn) { location.href = '/signin'; return; }
+      if (votedPosts.has(pid)) return;
+      try {
+        const res = await fetch(`/api/community/posts/${pid}/upvote`, {
+          method: 'POST', headers: { Authorization: 'Bearer ' + token }
+        });
+        if (res.ok) {
+          const { upvotes } = await res.json();
+          document.getElementById('post-upvote-count').textContent = upvotes;
+          btn.classList.add('voted');
+          votedPosts.add(pid);
+          localStorage.setItem('jq_voted_posts', JSON.stringify([...votedPosts]));
+        }
+      } catch {}
+    }
+
+    async function upvoteComment(cid, btn) {
+      if (!isSignedIn) { location.href = '/signin'; return; }
+      if (votedComments.has(cid)) return;
+      try {
+        const res = await fetch(`/api/community/comments/${cid}/upvote`, {
+          method: 'POST', headers: { Authorization: 'Bearer ' + token }
+        });
+        if (res.ok) {
+          const { upvotes } = await res.json();
+          document.getElementById(`cup-${cid}`).textContent = upvotes;
+          btn.classList.add('voted');
+          votedComments.add(cid);
+          localStorage.setItem('jq_voted_comments', JSON.stringify([...votedComments]));
+        }
+      } catch {}
+    }
+
+    async function submitComment(parentId) {
+      const textareaId = parentId ? `reply-text-${parentId}` : 'comment-body';
+      const errorId    = parentId ? `reply-error-${parentId}` : 'comment-error';
+      const body = document.getElementById(textareaId).value.trim();
+      const errEl = document.getElementById(errorId);
+      if (!body) { errEl.textContent = 'Cannot be empty.'; return; }
+      try {
+        const res = await fetch(`/api/community/posts/${postId}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ body, parentId })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; return; }
+        document.getElementById(textareaId).value = '';
+        await loadComments();
+      } catch { errEl.textContent = 'Something went wrong.'; }
+    }
+
+    function signOut() {
+      fetch('/auth/signout', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }).catch(() => {});
+      localStorage.removeItem('jq_access');
+      localStorage.removeItem('jq_refresh');
+      location.href = '/';
+    }
+
+    loadPage();
+  </script>
+
+</body>
+</html>

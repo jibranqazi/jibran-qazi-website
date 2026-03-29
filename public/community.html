@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sand: #ede0cc;
+      --deep: #d4c4a8;
+      --black: #111110;
+      --mid: #888885;
+      --light: #ddd8cf;
+    }
+
+    body {
+      background: var(--sand);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    body.visible { opacity: 1; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--light);
+    }
+
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+    }
+
+    .header-right { display: flex; align-items: center; gap: 24px; }
+
+    .nav-link {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--black); }
+
+    .nav-btn {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: color 0.2s;
+    }
+    .nav-btn:hover { color: var(--black); }
+
+    main {
+      max-width: 840px;
+      margin: 0 auto;
+      padding: 80px 48px;
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 56px;
+    }
+
+    .page-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 12px;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .new-post-btn {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: none;
+      border: 1px solid var(--black);
+      padding: 11px 22px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .new-post-btn:hover { background: var(--black); color: var(--sand); }
+
+    /* ── Post rows ── */
+    .post-row {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--light);
+    }
+    .post-row:first-child { border-top: 1px solid var(--light); }
+
+    .upvote-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      min-width: 28px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    .upvote-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mid);
+      font-size: 12px;
+      padding: 2px 4px;
+      line-height: 1;
+      transition: color 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .upvote-btn:hover, .upvote-btn.voted { color: var(--black); }
+
+    .upvote-count {
+      font-size: 11px;
+      color: var(--mid);
+    }
+
+    .post-content { flex: 1; cursor: pointer; }
+    .post-content:hover .post-title-link { opacity: 0.6; }
+
+    .post-title-link {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+      margin-bottom: 10px;
+      display: block;
+      transition: opacity 0.2s;
+    }
+
+    .post-meta-line {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+
+    .empty-state {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 22px;
+      color: var(--mid);
+      padding: 56px 0 16px;
+    }
+
+    .sign-in-nudge {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--mid);
+      margin-top: 12px;
+    }
+    .sign-in-nudge a {
+      color: var(--black);
+      text-decoration: none;
+      border-bottom: 1px solid var(--mid);
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(17,17,16,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; }
+
+    .modal {
+      background: var(--sand);
+      width: 100%;
+      max-width: 580px;
+      padding: 52px;
+    }
+
+    .modal-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 28px;
+    }
+
+    .modal input, .modal textarea {
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--light);
+      width: 100%;
+      padding: 0 0 14px;
+      color: var(--black);
+      outline: none;
+      display: block;
+      margin-bottom: 28px;
+    }
+
+    .modal input {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+      padding-bottom: 18px;
+    }
+
+    .modal textarea {
+      resize: none;
+      min-height: 120px;
+      line-height: 1.8;
+      margin-bottom: 36px;
+    }
+
+    .modal input::placeholder, .modal textarea::placeholder { color: var(--mid); }
+
+    .modal-actions { display: flex; gap: 16px; align-items: center; }
+
+    .btn-primary {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--sand);
+      background: var(--black);
+      border: 1px solid var(--black);
+      padding: 12px 24px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.75; }
+
+    .btn-ghost {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--black); }
+
+    .error-msg {
+      font-size: 11px;
+      color: #b04040;
+      margin-left: auto;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 20px 24px; }
+      main { padding: 48px 24px; }
+      .modal { padding: 36px 24px; }
+      .feed-header { flex-direction: column; align-items: flex-start; gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="wordmark">Jibran Qazi</a>
+    <div class="header-right">
+      <a href="/members" class="nav-link" id="members-link" style="display:none">Members →</a>
+      <button class="nav-btn" id="signout-btn" style="display:none" onclick="signOut()">Sign Out</button>
+      <a href="/signin" class="nav-link" id="signin-link">Sign In</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="feed-header">
+      <div>
+        <p class="page-eyebrow">Member Community</p>
+        <h1 class="page-title">Discussions</h1>
+      </div>
+      <button class="new-post-btn" id="new-post-btn" style="display:none" onclick="openModal()">+ New Post</button>
+    </div>
+
+    <div id="post-list"></div>
+  </main>
+
+  <div class="modal-overlay" id="modal-overlay" style="display:none" onclick="overlayClick(event)">
+    <div class="modal">
+      <p class="modal-eyebrow">New Discussion</p>
+      <input type="text" id="post-title" placeholder="Title" maxlength="300" />
+      <textarea id="post-body" placeholder="What's on your mind?"></textarea>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="submitPost()">Publish</button>
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        <span class="error-msg" id="post-error"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('jq_access');
+    const votedPosts = new Set(JSON.parse(localStorage.getItem('jq_voted_posts') || '[]'));
+    let isSignedIn = false;
+
+    function esc(s) {
+      return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function timeAgo(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return m + 'm ago';
+      const h = Math.floor(m / 60);
+      if (h < 24) return h + 'h ago';
+      const d = Math.floor(h / 24);
+      if (d < 30) return d + 'd ago';
+      return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    async function initAuth() {
+      if (token) {
+        try {
+          const res = await fetch('/auth/me', { headers: { Authorization: 'Bearer ' + token } });
+          if (res.ok) {
+            isSignedIn = true;
+            document.getElementById('members-link').style.display = '';
+            document.getElementById('signout-btn').style.display = '';
+            document.getElementById('signin-link').style.display = 'none';
+            document.getElementById('new-post-btn').style.display = '';
+          }
+        } catch {}
+      }
+      document.body.classList.add('visible');
+    }
+
+    async function loadPosts() {
+      const container = document.getElementById('post-list');
+      try {
+        const res = await fetch('/api/community/posts');
+        const posts = await res.json();
+        if (!posts.length) {
+          container.innerHTML = `<p class="empty-state">The conversation starts with you.</p>
+            ${!isSignedIn ? '<p class="sign-in-nudge"><a href="/signin">Sign in</a> to start a discussion.</p>' : ''}`;
+          return;
+        }
+        container.innerHTML = posts.map(p => {
+          const voted = votedPosts.has(p.id);
+          const comments = p.commentCount || 0;
+          return `<div class="post-row">
+            <div class="upvote-col">
+              <button class="upvote-btn${voted ? ' voted' : ''}" onclick="upvotePost(event,'${esc(p.id)}',this)" title="Upvote">▲</button>
+              <span class="upvote-count" id="up-${esc(p.id)}">${p.upvotes || 0}</span>
+            </div>
+            <div class="post-content" onclick="location.href='/community/${esc(p.id)}'">
+              <span class="post-title-link">${esc(p.title)}</span>
+              <span class="post-meta-line">${esc(p.authorName)} · ${timeAgo(p.createdAt)} · ${comments} comment${comments !== 1 ? 's' : ''}</span>
+            </div>
+          </div>`;
+        }).join('');
+      } catch {
+        container.innerHTML = '<p class="empty-state">Could not load posts.</p>';
+      }
+    }
+
+    async function upvotePost(e, postId, btn) {
+      e.stopPropagation();
+      if (!isSignedIn) { location.href = '/signin'; return; }
+      if (votedPosts.has(postId)) return;
+      try {
+        const res = await fetch(`/api/community/posts/${postId}/upvote`, {
+          method: 'POST', headers: { Authorization: 'Bearer ' + token }
+        });
+        if (res.ok) {
+          const { upvotes } = await res.json();
+          document.getElementById(`up-${postId}`).textContent = upvotes;
+          btn.classList.add('voted');
+          votedPosts.add(postId);
+          localStorage.setItem('jq_voted_posts', JSON.stringify([...votedPosts]));
+        }
+      } catch {}
+    }
+
+    function openModal() {
+      const el = document.getElementById('modal-overlay');
+      el.style.display = 'flex';
+      requestAnimationFrame(() => el.classList.add('open'));
+      setTimeout(() => document.getElementById('post-title').focus(), 50);
+    }
+
+    function closeModal() {
+      const el = document.getElementById('modal-overlay');
+      el.classList.remove('open');
+      setTimeout(() => { el.style.display = 'none'; }, 200);
+      document.getElementById('post-error').textContent = '';
+    }
+
+    function overlayClick(e) { if (e.target === e.currentTarget) closeModal(); }
+
+    async function submitPost() {
+      const title = document.getElementById('post-title').value.trim();
+      const body  = document.getElementById('post-body').value.trim();
+      const errEl = document.getElementById('post-error');
+      if (!title) { errEl.textContent = 'Title required.'; return; }
+      if (!body)  { errEl.textContent = 'Body required.'; return; }
+      try {
+        const res = await fetch('/api/community/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ title, body })
+        });
+        const data = await res.json();
+        if (!res.ok) { errEl.textContent = data.error || 'Failed.'; return; }
+        location.href = '/community/' + data.id;
+      } catch { errEl.textContent = 'Something went wrong.'; }
+    }
+
+    function signOut() {
+      fetch('/auth/signout', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }).catch(() => {});
+      localStorage.removeItem('jq_access');
+      localStorage.removeItem('jq_refresh');
+      location.href = '/';
+    }
+
+    initAuth().then(loadPosts);
+  </script>
+
+</body>
+</html>

@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const multer = require('multer');
 const { DynamoDBClient, CreateTableCommand, DescribeTableCommand } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
@@ -14,6 +15,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'jq2026admin';
 const REGION = 'us-east-1';
 const TABLE = 'jibranqazi-subscribers';
 const POSTS_TABLE = 'jibranqazi-posts';
+const COMMUNITY_POSTS_TABLE = 'jibranqazi-community-posts';
+const COMMUNITY_COMMENTS_TABLE = 'jibranqazi-community-comments';
+const USERS_TABLE = 'jibranqazi-users';
 
 const client = new DynamoDBClient({ region: REGION });
 const db = DynamoDBDocumentClient.from(client);
@@ -174,6 +178,53 @@ async function ensurePostsTable() {
   }
 }
 ensurePostsTable().catch(console.error);
+
+async function ensureCommunityTables() {
+  const configs = [
+    { TableName: COMMUNITY_POSTS_TABLE, key: 'id' },
+    { TableName: COMMUNITY_COMMENTS_TABLE, key: 'id' },
+    { TableName: USERS_TABLE, key: 'sub' }
+  ];
+  for (const { TableName, key } of configs) {
+    try {
+      await client.send(new DescribeTableCommand({ TableName }));
+    } catch (err) {
+      if (err.name === 'ResourceNotFoundException') {
+        await client.send(new CreateTableCommand({
+          TableName,
+          KeySchema: [{ AttributeName: key, KeyType: 'HASH' }],
+          AttributeDefinitions: [{ AttributeName: key, AttributeType: 'S' }],
+          BillingMode: 'PAY_PER_REQUEST'
+        }));
+        console.log(`Created ${TableName}`);
+      }
+    }
+  }
+}
+ensureCommunityTables().catch(console.error);
+
+async function getCallerName(accessToken) {
+  try {
+    const u = await cognito.send(new GetUserCommand({ AccessToken: accessToken }));
+    const attrs = {};
+    u.UserAttributes.forEach(a => { attrs[a.Name] = a.Value; });
+    return attrs.name || attrs.email || 'Member';
+  } catch { return 'Member'; }
+}
+
+function stripVoters({ voters, ...rest }) { return rest; }
+
+async function enrichWithKarma(items) {
+  const subs = [...new Set(items.map(i => i.authorSub).filter(Boolean))];
+  const karmaMap = {};
+  await Promise.all(subs.map(async sub => {
+    try {
+      const r = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub } }));
+      karmaMap[sub] = r.Item?.karma || 0;
+    } catch {}
+  }));
+  return items.map(i => ({ ...i, authorKarma: karmaMap[i.authorSub] || 0 }));
+}
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -475,6 +526,180 @@ app.get('/auth/me', requireMember, async (req, res) => {
 // ── GET /journal ──────────────────────────────────────────────────
 app.get('/journal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'journal.html')));
 app.get('/journal/:slug', (req, res) => res.sendFile(path.join(__dirname, 'public', 'post.html')));
+
+// ── Community pages ───────────────────────────────────────────────
+app.get('/community', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community.html')));
+app.get('/community/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community-thread.html')));
+
+// GET /api/community/posts
+app.get('/api/community/posts', async (req, res) => {
+  try {
+    const result = await db.send(new ScanCommand({ TableName: COMMUNITY_POSTS_TABLE }));
+    const posts = (result.Items || [])
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map(stripVoters);
+    res.json(posts);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load posts.' });
+  }
+});
+
+// POST /api/community/posts
+app.post('/api/community/posts', requireMember, async (req, res) => {
+  const { title, body } = req.body;
+  if (!title?.trim() || !body?.trim()) return res.status(400).json({ error: 'Title and body required.' });
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const authorName = await getCallerName(token);
+  const post = {
+    id: crypto.randomUUID(),
+    title: title.trim().slice(0, 300),
+    body: body.trim().slice(0, 10000),
+    authorName,
+    authorSub: req.user.sub,
+    upvotes: 0,
+    commentCount: 0,
+    createdAt: new Date().toISOString()
+  };
+  try {
+    await db.send(new PutCommand({ TableName: COMMUNITY_POSTS_TABLE, Item: post }));
+    await db.send(new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: { sub: req.user.sub },
+      UpdateExpression: 'SET displayName = if_not_exists(displayName, :n), karma = if_not_exists(karma, :zero)',
+      ExpressionAttributeValues: { ':n': authorName, ':zero': 0 }
+    }));
+    res.status(201).json(post);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create post.' });
+  }
+});
+
+// GET /api/community/posts/:id
+app.get('/api/community/posts/:id', async (req, res) => {
+  try {
+    const result = await db.send(new GetCommand({ TableName: COMMUNITY_POSTS_TABLE, Key: { id: req.params.id } }));
+    if (!result.Item) return res.status(404).json({ error: 'Post not found.' });
+    const [enriched] = await enrichWithKarma([stripVoters(result.Item)]);
+    res.json(enriched);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load post.' });
+  }
+});
+
+// GET /api/community/posts/:id/comments
+app.get('/api/community/posts/:id/comments', async (req, res) => {
+  try {
+    const result = await db.send(new ScanCommand({
+      TableName: COMMUNITY_COMMENTS_TABLE,
+      FilterExpression: 'postId = :pid',
+      ExpressionAttributeValues: { ':pid': req.params.id }
+    }));
+    const sorted = (result.Items || [])
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .map(stripVoters);
+    const enriched = await enrichWithKarma(sorted);
+    res.json(enriched);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load comments.' });
+  }
+});
+
+// POST /api/community/posts/:id/comments
+app.post('/api/community/posts/:id/comments', requireMember, async (req, res) => {
+  const { body, parentId } = req.body;
+  if (!body?.trim()) return res.status(400).json({ error: 'Comment body required.' });
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const authorName = await getCallerName(token);
+  const comment = {
+    id: crypto.randomUUID(),
+    postId: req.params.id,
+    parentId: parentId || null,
+    authorName,
+    authorSub: req.user.sub,
+    body: body.trim().slice(0, 5000),
+    upvotes: 0,
+    createdAt: new Date().toISOString()
+  };
+  try {
+    await db.send(new PutCommand({ TableName: COMMUNITY_COMMENTS_TABLE, Item: comment }));
+    await db.send(new UpdateCommand({
+      TableName: COMMUNITY_POSTS_TABLE,
+      Key: { id: req.params.id },
+      UpdateExpression: 'ADD commentCount :one',
+      ExpressionAttributeValues: { ':one': 1 }
+    }));
+    await db.send(new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: { sub: req.user.sub },
+      UpdateExpression: 'SET displayName = if_not_exists(displayName, :n), karma = if_not_exists(karma, :zero)',
+      ExpressionAttributeValues: { ':n': authorName, ':zero': 0 }
+    }));
+    res.status(201).json(comment);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to post comment.' });
+  }
+});
+
+// POST /api/community/posts/:id/upvote
+app.post('/api/community/posts/:id/upvote', requireMember, async (req, res) => {
+  const sub = req.user.sub;
+  try {
+    const result = await db.send(new UpdateCommand({
+      TableName: COMMUNITY_POSTS_TABLE,
+      Key: { id: req.params.id },
+      UpdateExpression: 'ADD upvotes :one, voters :voterSet',
+      ConditionExpression: 'attribute_exists(id) AND NOT contains(voters, :sub)',
+      ExpressionAttributeValues: { ':one': 1, ':voterSet': new Set([sub]), ':sub': sub },
+      ReturnValues: 'ALL_NEW'
+    }));
+    const post = result.Attributes;
+    if (post.authorSub && post.authorSub !== sub) {
+      await db.send(new UpdateCommand({
+        TableName: USERS_TABLE,
+        Key: { sub: post.authorSub },
+        UpdateExpression: 'ADD karma :one SET displayName = if_not_exists(displayName, :n)',
+        ExpressionAttributeValues: { ':one': 1, ':n': post.authorName }
+      }));
+    }
+    res.json({ upvotes: post.upvotes });
+  } catch (err) {
+    if (err.name === 'ConditionalCheckFailedException') return res.status(409).json({ error: 'Already upvoted.' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to upvote.' });
+  }
+});
+
+// POST /api/community/comments/:id/upvote
+app.post('/api/community/comments/:id/upvote', requireMember, async (req, res) => {
+  const sub = req.user.sub;
+  try {
+    const result = await db.send(new UpdateCommand({
+      TableName: COMMUNITY_COMMENTS_TABLE,
+      Key: { id: req.params.id },
+      UpdateExpression: 'ADD upvotes :one, voters :voterSet',
+      ConditionExpression: 'attribute_exists(id) AND NOT contains(voters, :sub)',
+      ExpressionAttributeValues: { ':one': 1, ':voterSet': new Set([sub]), ':sub': sub },
+      ReturnValues: 'ALL_NEW'
+    }));
+    const comment = result.Attributes;
+    if (comment.authorSub && comment.authorSub !== sub) {
+      await db.send(new UpdateCommand({
+        TableName: USERS_TABLE,
+        Key: { sub: comment.authorSub },
+        UpdateExpression: 'ADD karma :one SET displayName = if_not_exists(displayName, :n)',
+        ExpressionAttributeValues: { ':one': 1, ':n': comment.authorName }
+      }));
+    }
+    res.json({ upvotes: comment.upvotes });
+  } catch (err) {
+    if (err.name === 'ConditionalCheckFailedException') return res.status(409).json({ error: 'Already upvoted.' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to upvote.' });
+  }
+});
 
 // ── Catch-all ─────────────────────────────────────────────────────
 app.get('/{*path}', (req, res) => {
