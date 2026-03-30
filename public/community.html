@@ -118,6 +118,25 @@
     }
     .new-post-btn:hover { background: var(--black); color: var(--sand); }
 
+    .community-tabs {
+      display: flex;
+      margin-bottom: 48px;
+      border-bottom: 1px solid var(--light);
+    }
+    .tab-link {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      padding: 0 0 16px;
+      margin-right: 36px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-link:hover { color: var(--black); }
+    .tab-link.active { color: var(--black); border-bottom: 1px solid var(--black); }
+
     /* ── Post rows ── */
     .post-row {
       display: flex;
@@ -324,6 +343,11 @@
       </div>
       <button class="new-post-btn" id="new-post-btn" style="display:none" onclick="openModal()">+ New Post</button>
     </div>
+
+    <nav class="community-tabs">
+      <a class="tab-link active" href="/community">Discussion</a>
+      <a class="tab-link" href="/community/polls">Polls</a>
+    </nav>
 
     <div id="post-list"></div>
   </main>

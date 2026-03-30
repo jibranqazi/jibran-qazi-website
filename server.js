@@ -18,6 +18,7 @@ const POSTS_TABLE = 'jibranqazi-posts';
 const COMMUNITY_POSTS_TABLE = 'jibranqazi-community-posts';
 const COMMUNITY_COMMENTS_TABLE = 'jibranqazi-community-comments';
 const USERS_TABLE = 'jibranqazi-users';
+const COMMUNITY_POLLS_TABLE = 'jibranqazi-community-polls';
 
 const client = new DynamoDBClient({ region: REGION });
 const db = DynamoDBDocumentClient.from(client);
@@ -183,7 +184,8 @@ async function ensureCommunityTables() {
   const configs = [
     { TableName: COMMUNITY_POSTS_TABLE, key: 'id' },
     { TableName: COMMUNITY_COMMENTS_TABLE, key: 'id' },
-    { TableName: USERS_TABLE, key: 'sub' }
+    { TableName: USERS_TABLE, key: 'sub' },
+    { TableName: COMMUNITY_POLLS_TABLE, key: 'id' }
   ];
   for (const { TableName, key } of configs) {
     try {
@@ -529,6 +531,7 @@ app.get('/journal/:slug', (req, res) => res.sendFile(path.join(__dirname, 'publi
 
 // ── Community pages ───────────────────────────────────────────────
 app.get('/community', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community.html')));
+app.get('/community/polls', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community-polls.html')));
 app.get('/community/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community-thread.html')));
 
 // GET /api/community/posts
@@ -701,6 +704,83 @@ app.post('/api/community/comments/:id/upvote', requireMember, async (req, res) =
   }
 });
 
+
+// ── Polls API ─────────────────────────────────────────────────────
+
+// GET /api/community/polls
+app.get('/api/community/polls', async (req, res) => {
+  try {
+    const result = await db.send(new ScanCommand({ TableName: COMMUNITY_POLLS_TABLE }));
+    const polls = (result.Items || [])
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map(({ voters, ...rest }) => rest);
+    res.json(polls);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load polls.' });
+  }
+});
+
+// POST /api/community/polls
+app.post('/api/community/polls', requireMember, async (req, res) => {
+  const { question, options, endsAt } = req.body;
+  if (!question?.trim()) return res.status(400).json({ error: 'Question required.' });
+  if (!Array.isArray(options) || options.length < 2 || options.length > 5) {
+    return res.status(400).json({ error: 'Provide 2–5 options.' });
+  }
+  const labels = options.map(o => String(o).trim()).filter(Boolean);
+  if (labels.length < 2) return res.status(400).json({ error: 'Provide at least 2 non-empty options.' });
+
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  const authorName = await getCallerName(token);
+  const optionVotes = {};
+  labels.forEach((_, i) => { optionVotes[String(i)] = 0; });
+
+  const poll = {
+    id: crypto.randomUUID(),
+    question: question.trim().slice(0, 500),
+    options: labels,
+    optionVotes,
+    totalVotes: 0,
+    authorSub: req.user.sub,
+    authorName,
+    status: 'active',
+    endsAt: endsAt || null,
+    createdAt: new Date().toISOString()
+  };
+  try {
+    await db.send(new PutCommand({ TableName: COMMUNITY_POLLS_TABLE, Item: poll }));
+    res.status(201).json(poll);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create poll.' });
+  }
+});
+
+// POST /api/community/polls/:id/vote
+app.post('/api/community/polls/:id/vote', requireMember, async (req, res) => {
+  const { optionIndex } = req.body;
+  if (optionIndex === undefined || optionIndex === null) return res.status(400).json({ error: 'optionIndex required.' });
+  const sub = req.user.sub;
+  const optKey = String(optionIndex);
+  try {
+    const result = await db.send(new UpdateCommand({
+      TableName: COMMUNITY_POLLS_TABLE,
+      Key: { id: req.params.id },
+      UpdateExpression: 'SET #ov.#opt = #ov.#opt + :one, totalVotes = totalVotes + :one ADD voters :voterSet',
+      ConditionExpression: 'attribute_exists(id) AND #s = :active AND NOT contains(voters, :sub)',
+      ExpressionAttributeNames: { '#ov': 'optionVotes', '#opt': optKey, '#s': 'status' },
+      ExpressionAttributeValues: { ':one': 1, ':voterSet': new Set([sub]), ':sub': sub, ':active': 'active' },
+      ReturnValues: 'ALL_NEW'
+    }));
+    const poll = result.Attributes;
+    res.json({ optionVotes: poll.optionVotes, totalVotes: poll.totalVotes });
+  } catch (err) {
+    if (err.name === 'ConditionalCheckFailedException') return res.status(409).json({ error: 'Already voted or poll is closed.' });
+    console.error(err);
+    res.status(500).json({ error: 'Failed to record vote.' });
+  }
+});
 
 // ── Catch-all ─────────────────────────────────────────────────────
 app.get('/{*path}', (req, res) => {

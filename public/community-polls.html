@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polls — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sand: #ede0cc;
+      --black: #111110;
+      --mid: #888885;
+      --light: #ddd8cf;
+      --poll-bg: #1a1f2e;
+      --poll-surface: #232938;
+      --poll-border: #2e3449;
+      --poll-accent: #7c85e0;
+      --poll-accent-dim: #4a5299;
+      --poll-text: #e8e6f0;
+      --poll-muted: #7b7d9a;
+      --poll-bar: #3d4566;
+      --poll-bar-fill: #7c85e0;
+      --poll-bar-winner: #a5aef7;
+      --poll-tag-bg: rgba(124,133,224,0.12);
+      --poll-tag-text: #a5aef7;
+    }
+
+    body {
+      background: var(--sand);
+      color: var(--black);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    body.visible { opacity: 1; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--light);
+    }
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--black);
+    }
+    .header-right { display: flex; align-items: center; gap: 24px; }
+    .nav-link {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--black); }
+    .nav-btn {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: color 0.2s;
+    }
+    .nav-btn:hover { color: var(--black); }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 48px 120px;
+    }
+
+    .page-eyebrow {
+      font-size: 9px;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 12px;
+    }
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+    }
+    .page-subtitle {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--mid);
+      margin-bottom: 64px;
+    }
+
+    .community-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 56px;
+      border-bottom: 1px solid var(--light);
+    }
+    .tab-link {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      text-decoration: none;
+      padding: 0 0 16px;
+      margin-right: 36px;
+      border-bottom: 1px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-link:hover { color: var(--black); }
+    .tab-link.active { color: var(--black); border-bottom: 1px solid var(--black); }
+
+    /* ── Polls grid ── */
+    .polls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      margin-bottom: 2px;
+    }
+    .polls-grid .poll-card.featured { grid-column: 1 / -1; }
+
+    /* ── Poll card ── */
+    .poll-card {
+      background: var(--poll-bg);
+      padding: 40px 44px 36px;
+      position: relative;
+      overflow: hidden;
+    }
+    .poll-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--poll-accent-dim), var(--poll-accent), var(--poll-accent-dim));
+      opacity: 0.5;
+    }
+
+    .poll-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 8px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--poll-tag-text);
+      background: var(--poll-tag-bg);
+      border: 1px solid rgba(124,133,224,0.2);
+      padding: 5px 12px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+    .poll-tag-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--poll-accent);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .poll-closed-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 8px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--poll-muted);
+      border: 1px solid var(--poll-border);
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    .poll-question {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(18px, 2.5vw, 28px);
+      font-weight: 300;
+      color: var(--poll-text);
+      line-height: 1.25;
+      letter-spacing: 0.01em;
+      margin-bottom: 32px;
+    }
+
+    /* Options (pre-vote) */
+    .poll-options { display: flex; flex-direction: column; gap: 10px; }
+    .poll-option {
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--poll-border);
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .poll-option:hover { border-color: var(--poll-accent-dim); background: rgba(124,133,224,0.04); }
+    .poll-option.selected { border-color: var(--poll-accent); }
+
+    .option-radio {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 1.5px solid var(--poll-muted);
+      flex-shrink: 0;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .poll-option.selected .option-radio {
+      border-color: var(--poll-accent);
+      background: var(--poll-accent);
+    }
+    .poll-option.selected .option-radio::after {
+      content: '';
+      display: block;
+      width: 5px; height: 5px;
+      background: var(--poll-bg);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .option-label {
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--poll-text);
+      font-weight: 300;
+      flex: 1;
+    }
+
+    .vote-btn {
+      margin-top: 18px;
+      background: none;
+      border: 1px solid var(--poll-accent-dim);
+      color: var(--poll-accent);
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      padding: 11px 24px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .vote-btn:hover { background: var(--poll-accent); border-color: var(--poll-accent); color: var(--poll-bg); }
+    .vote-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Results */
+    .poll-results { display: flex; flex-direction: column; gap: 14px; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+    .result-label { font-size: 11px; letter-spacing: 0.05em; color: var(--poll-text); }
+    .result-label.winner { color: var(--poll-bar-winner); }
+    .result-pct { font-size: 10px; letter-spacing: 0.08em; color: var(--poll-muted); }
+    .result-pct.winner { color: var(--poll-bar-winner); }
+    .result-bar-track { height: 3px; background: var(--poll-bar); }
+    .result-bar-fill { height: 100%; background: var(--poll-bar-fill); transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+    .result-bar-fill.winner { background: linear-gradient(90deg, var(--poll-bar-fill), var(--poll-bar-winner)); }
+
+    .poll-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--poll-border);
+    }
+    .poll-footer-meta { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--poll-muted); }
+    .poll-footer-author { font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--poll-muted); }
+    .poll-footer-author span { color: var(--poll-accent); }
+
+    /* Sign-in nudge inside card */
+    .signin-nudge {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--poll-muted);
+      margin-top: 18px;
+    }
+    .signin-nudge a { color: var(--poll-accent); text-decoration: none; border-bottom: 1px solid var(--poll-accent-dim); }
+
+    /* Create CTA */
+    .create-poll-card {
+      background: var(--sand);
+      border: 1px solid var(--light);
+      padding: 40px 44px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 32px;
+      margin-top: 2px;
+    }
+    .create-poll-text .label {
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 8px;
+    }
+    .create-poll-text .heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 300;
+      line-height: 1.2;
+    }
+    .create-poll-btn {
+      flex-shrink: 0;
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: none;
+      border: 1px solid var(--black);
+      padding: 12px 28px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    .create-poll-btn:hover { background: var(--black); color: var(--sand); }
+
+    /* Empty state */
+    .empty-state {
+      grid-column: 1 / -1;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 22px;
+      color: var(--mid);
+      padding: 56px 0 16px;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(17,17,16,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--sand);
+      width: 100%;
+      max-width: 560px;
+      padding: 48px;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px; right: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--mid);
+      line-height: 1;
+    }
+    .modal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 300;
+      margin-bottom: 36px;
+    }
+    .field-label {
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 10px;
+      display: block;
+    }
+    .field-input, .field-textarea {
+      width: 100%;
+      background: none;
+      border: 1px solid var(--light);
+      padding: 12px 14px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--black);
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 24px;
+    }
+    .field-input:focus, .field-textarea:focus { border-color: var(--black); }
+    .field-textarea { min-height: 80px; resize: vertical; }
+    .options-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .option-input-row { display: flex; gap: 8px; align-items: center; }
+    .option-input-row .field-input { margin-bottom: 0; flex: 1; }
+    .remove-opt-btn {
+      background: none;
+      border: none;
+      color: var(--mid);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+    .remove-opt-btn:hover { color: var(--black); }
+    .add-option-btn {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--mid);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      margin-bottom: 28px;
+      transition: color 0.2s;
+    }
+    .add-option-btn:hover { color: var(--black); }
+    .modal-submit {
+      width: 100%;
+      font-size: 9px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--sand);
+      background: var(--black);
+      border: 1px solid var(--black);
+      padding: 14px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-weight: 300;
+      transition: opacity 0.2s;
+    }
+    .modal-submit:hover { opacity: 0.8; }
+    .modal-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+    .modal-error {
+      font-size: 11px;
+      color: #b55e5e;
+      margin-top: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 680px) {
+      header { padding: 20px 24px; }
+      main { padding: 56px 24px 80px; }
+      .polls-grid { grid-template-columns: 1fr; }
+      .polls-grid .poll-card.featured { grid-column: 1; }
+      .poll-card { padding: 28px 24px; }
+      .create-poll-card { flex-direction: column; align-items: flex-start; padding: 28px 24px; }
+      .modal { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="wordmark" href="/">Jibran Qazi</a>
+    <div class="header-right">
+      <a class="nav-link" href="/community">Community</a>
+      <a class="nav-link" href="/#journal">Journal</a>
+      <span id="auth-nav"></span>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-eyebrow">Community</div>
+    <h1 class="page-title">Polls</h1>
+    <p class="page-subtitle">Cast your vote. Shape what comes next.</p>
+
+    <nav class="community-tabs">
+      <a class="tab-link" href="/community">Discussion</a>
+      <a class="tab-link active" href="/community/polls">Polls</a>
+    </nav>
+
+    <div class="polls-grid" id="polls-grid">
+      <p class="empty-state">Loading polls…</p>
+    </div>
+
+    <div class="create-poll-card" id="create-cta" style="display:none;">
+      <div class="create-poll-text">
+        <p class="label">Members</p>
+        <p class="heading">Have a question for the community?</p>
+      </div>
+      <button class="create-poll-btn" onclick="openModal()">Create a poll</button>
+    </div>
+
+    <div class="create-poll-card" id="signin-cta" style="display:none;">
+      <div class="create-poll-text">
+        <p class="label">Members only</p>
+        <p class="heading">Sign in to vote and create polls.</p>
+      </div>
+      <a class="create-poll-btn" href="/signin">Sign in</a>
+    </div>
+  </main>
+
+  <!-- Create poll modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h2 class="modal-title">New poll</h2>
+
+      <label class="field-label">Question</label>
+      <input class="field-input" id="poll-question" type="text" placeholder="Ask the community something…" maxlength="500" />
+
+      <label class="field-label">Options</label>
+      <div class="options-list" id="options-list">
+        <div class="option-input-row">
+          <input class="field-input" type="text" placeholder="Option 1" maxlength="200" />
+        </div>
+        <div class="option-input-row">
+          <input class="field-input" type="text" placeholder="Option 2" maxlength="200" />
+          <button class="remove-opt-btn" onclick="removeOption(this)">×</button>
+        </div>
+      </div>
+      <button class="add-option-btn" id="add-opt-btn" onclick="addOption()">+ Add option</button>
+
+      <button class="modal-submit" id="submit-btn" onclick="submitPoll()">Publish poll</button>
+      <p class="modal-error" id="modal-error" style="display:none;"></p>
+    </div>
+  </div>
+
+  <script>
+    const ACCESS = localStorage.getItem('jq_access');
+    const VOTED_KEY = 'jq_voted_polls';
+    let votedPolls = JSON.parse(localStorage.getItem(VOTED_KEY) || '{}');
+    let pollsData = [];
+
+    // ── Auth nav ──────────────────────────────────────────────────
+    function renderAuthNav() {
+      const nav = document.getElementById('auth-nav');
+      if (ACCESS) {
+        nav.innerHTML = `<a class="nav-link" href="/members">Members</a>
+          <button class="nav-btn" onclick="signOut()">Sign out</button>`;
+      } else {
+        nav.innerHTML = `<a class="nav-link" href="/signin">Sign in</a>`;
+      }
+    }
+
+    async function signOut() {
+      await fetch('/auth/signout', { method: 'POST', headers: { Authorization: `Bearer ${ACCESS}` } }).catch(() => {});
+      localStorage.removeItem('jq_access');
+      localStorage.removeItem('jq_refresh');
+      localStorage.removeItem('jq_id');
+      window.location.href = '/';
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function timeAgo(iso) {
+      const diff = (Date.now() - new Date(iso)) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+      return `${Math.floor(diff/86400)}d ago`;
+    }
+
+    function daysLeft(iso) {
+      if (!iso) return null;
+      const diff = Math.ceil((new Date(iso) - Date.now()) / 86400000);
+      if (diff <= 0) return null;
+      return diff === 1 ? '1 day left' : `${diff} days left`;
+    }
+
+    // ── Render polls ──────────────────────────────────────────────
+    function renderPolls(polls) {
+      const grid = document.getElementById('polls-grid');
+      if (!polls.length) {
+        grid.innerHTML = '<p class="empty-state">No polls yet — be the first to ask.</p>';
+        return;
+      }
+
+      grid.innerHTML = polls.map((poll, idx) => {
+        const voted = votedPolls[poll.id];
+        const isClosed = poll.status === 'closed';
+        const showResults = voted !== undefined || isClosed;
+        const featured = idx === 0 ? ' featured' : '';
+        return buildCard(poll, showResults, voted, isClosed, featured);
+      }).join('');
+
+      // Animate bars
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.result-bar-fill[data-w]').forEach(bar => {
+          bar.style.width = bar.dataset.w + '%';
+        });
+      });
+    }
+
+    function buildCard(poll, showResults, votedIdx, isClosed, featured) {
+      const total = poll.totalVotes || 0;
+      const days = daysLeft(poll.endsAt);
+
+      let tagHtml;
+      if (isClosed) {
+        tagHtml = `<div class="poll-tag"><span class="poll-closed-badge">Closed</span></div>`;
+      } else {
+        const daysStr = days ? ` · ${days}` : ' · Open';
+        tagHtml = `<div class="poll-tag"><span class="poll-tag-dot"></span>Live${daysStr}</div>`;
+      }
+
+      let bodyHtml;
+      if (showResults) {
+        const votes = poll.optionVotes || {};
+        const maxVotes = Math.max(...poll.options.map((_, i) => Number(votes[i] || 0)), 1);
+        bodyHtml = `<div class="poll-results">` + poll.options.map((label, i) => {
+          const v = Number(votes[i] || 0);
+          const pct = total ? Math.round((v / total) * 100) : 0;
+          const isWinner = v === maxVotes && v > 0;
+          const winClass = isWinner ? ' winner' : '';
+          return `<div class="result-row">
+            <div class="result-header">
+              <span class="result-label${winClass}">${esc(label)}</span>
+              <span class="result-pct${winClass}">${pct}%</span>
+            </div>
+            <div class="result-bar-track"><div class="result-bar-fill${winClass}" data-w="${pct}" style="width:0%"></div></div>
+          </div>`;
+        }).join('') + `</div>`;
+      } else {
+        bodyHtml = `<div class="poll-options" id="opts-${poll.id}">` +
+          poll.options.map((label, i) => `<label class="poll-option" onclick="selectOpt('${poll.id}',${i})">
+            <span class="option-radio" id="radio-${poll.id}-${i}"></span>
+            <span class="option-label">${esc(label)}</span>
+          </label>`).join('') + `</div>`;
+
+        if (ACCESS) {
+          bodyHtml += `<button class="vote-btn" id="votebtn-${poll.id}" onclick="castVote('${poll.id}')">Cast vote</button>`;
+        } else {
+          bodyHtml += `<p class="signin-nudge"><a href="/signin">Sign in</a> to cast your vote</p>`;
+        }
+      }
+
+      const footerVoted = votedIdx !== undefined ? ' · You voted' : '';
+      return `<div class="poll-card${featured}" id="card-${poll.id}">
+        ${tagHtml}
+        <h2 class="poll-question">${esc(poll.question)}</h2>
+        ${bodyHtml}
+        <div class="poll-footer">
+          <span class="poll-footer-meta">${total} vote${total !== 1 ? 's' : ''}${footerVoted} · ${timeAgo(poll.createdAt)}</span>
+          <span class="poll-footer-author">Posted by <span>${esc(poll.authorName)}</span></span>
+        </div>
+      </div>`;
+    }
+
+    // ── Voting ────────────────────────────────────────────────────
+    let selections = {};
+
+    function selectOpt(pollId, idx) {
+      selections[pollId] = idx;
+      document.querySelectorAll(`#opts-${pollId} .poll-option`).forEach((opt, i) => {
+        opt.classList.toggle('selected', i === idx);
+      });
+    }
+
+    async function castVote(pollId) {
+      const idx = selections[pollId];
+      if (idx === undefined) return;
+      const btn = document.getElementById(`votebtn-${pollId}`);
+      btn.disabled = true;
+      btn.textContent = 'Voting…';
+
+      try {
+        const r = await fetch(`/api/community/polls/${pollId}/vote`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ACCESS}` },
+          body: JSON.stringify({ optionIndex: idx })
+        });
+        const data = await r.json();
+        if (!r.ok) { btn.textContent = data.error || 'Error'; btn.disabled = false; return; }
+
+        // Update stored voted state
+        votedPolls[pollId] = idx;
+        localStorage.setItem(VOTED_KEY, JSON.stringify(votedPolls));
+
+        // Replace card with results
+        const poll = pollsData.find(p => p.id === pollId);
+        if (poll) {
+          poll.optionVotes = data.optionVotes;
+          poll.totalVotes = data.totalVotes;
+          const card = document.getElementById(`card-${pollId}`);
+          const featured = card.classList.contains('featured') ? ' featured' : '';
+          card.outerHTML = buildCard(poll, true, idx, false, featured);
+          requestAnimationFrame(() => {
+            document.querySelectorAll(`#card-${pollId} .result-bar-fill[data-w]`).forEach(bar => {
+              bar.style.width = bar.dataset.w + '%';
+            });
+          });
+        }
+      } catch { btn.textContent = 'Error'; btn.disabled = false; }
+    }
+
+    // ── Load polls ────────────────────────────────────────────────
+    async function loadPolls() {
+      try {
+        const r = await fetch('/api/community/polls');
+        pollsData = await r.json();
+        renderPolls(pollsData);
+      } catch {
+        document.getElementById('polls-grid').innerHTML = '<p class="empty-state">Could not load polls.</p>';
+      }
+    }
+
+    // ── Modal ─────────────────────────────────────────────────────
+    function openModal() { document.getElementById('modal').classList.add('open'); }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+    document.getElementById('modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('modal')) closeModal();
+    });
+
+    function addOption() {
+      const list = document.getElementById('options-list');
+      if (list.children.length >= 5) return;
+      const row = document.createElement('div');
+      row.className = 'option-input-row';
+      const n = list.children.length + 1;
+      row.innerHTML = `<input class="field-input" type="text" placeholder="Option ${n}" maxlength="200" />
+        <button class="remove-opt-btn" onclick="removeOption(this)">×</button>`;
+      list.appendChild(row);
+      if (list.children.length >= 5) document.getElementById('add-opt-btn').style.display = 'none';
+    }
+
+    function removeOption(btn) {
+      const list = document.getElementById('options-list');
+      if (list.children.length <= 2) return;
+      btn.parentElement.remove();
+      document.getElementById('add-opt-btn').style.display = '';
+    }
+
+    async function submitPoll() {
+      const question = document.getElementById('poll-question').value.trim();
+      const inputs = document.querySelectorAll('#options-list .field-input');
+      const options = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
+      const err = document.getElementById('modal-error');
+      const btn = document.getElementById('submit-btn');
+
+      if (!question) { err.textContent = 'Please enter a question.'; err.style.display = ''; return; }
+      if (options.length < 2) { err.textContent = 'Please add at least 2 options.'; err.style.display = ''; return; }
+
+      err.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Publishing…';
+
+      try {
+        const r = await fetch('/api/community/polls', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ACCESS}` },
+          body: JSON.stringify({ question, options })
+        });
+        const data = await r.json();
+        if (!r.ok) { err.textContent = data.error || 'Error.'; err.style.display = ''; btn.disabled = false; btn.textContent = 'Publish poll'; return; }
+
+        pollsData.unshift(data);
+        renderPolls(pollsData);
+        closeModal();
+        btn.disabled = false;
+        btn.textContent = 'Publish poll';
+        document.getElementById('poll-question').value = '';
+        document.querySelectorAll('#options-list .field-input').forEach((inp, i) => { inp.value = ''; });
+      } catch { err.textContent = 'Something went wrong.'; err.style.display = ''; btn.disabled = false; btn.textContent = 'Publish poll'; }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────
+    renderAuthNav();
+    loadPolls();
+
+    if (ACCESS) {
+      document.getElementById('create-cta').style.display = '';
+    } else {
+      document.getElementById('signin-cta').style.display = '';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => document.body.classList.add('visible'));
+  </script>
+</body>
+</html>
