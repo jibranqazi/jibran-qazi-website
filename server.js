@@ -532,6 +532,7 @@ app.get('/journal/:slug', (req, res) => res.sendFile(path.join(__dirname, 'publi
 // ── Community pages ───────────────────────────────────────────────
 app.get('/community', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community.html')));
 app.get('/community/polls', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community-polls.html')));
+app.get('/community/profile/:sub', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community-profile.html')));
 app.get('/community/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community-thread.html')));
 
 // GET /api/community/posts
@@ -569,8 +570,8 @@ app.post('/api/community/posts', requireMember, async (req, res) => {
     await db.send(new UpdateCommand({
       TableName: USERS_TABLE,
       Key: { sub: req.user.sub },
-      UpdateExpression: 'SET displayName = if_not_exists(displayName, :n), karma = if_not_exists(karma, :zero)',
-      ExpressionAttributeValues: { ':n': authorName, ':zero': 0 }
+      UpdateExpression: 'SET displayName = if_not_exists(displayName, :n), karma = if_not_exists(karma, :zero), joinedAt = if_not_exists(joinedAt, :now)',
+      ExpressionAttributeValues: { ':n': authorName, ':zero': 0, ':now': new Date().toISOString() }
     }));
     res.status(201).json(post);
   } catch (err) {
@@ -636,8 +637,8 @@ app.post('/api/community/posts/:id/comments', requireMember, async (req, res) =>
     await db.send(new UpdateCommand({
       TableName: USERS_TABLE,
       Key: { sub: req.user.sub },
-      UpdateExpression: 'SET displayName = if_not_exists(displayName, :n), karma = if_not_exists(karma, :zero)',
-      ExpressionAttributeValues: { ':n': authorName, ':zero': 0 }
+      UpdateExpression: 'SET displayName = if_not_exists(displayName, :n), karma = if_not_exists(karma, :zero), joinedAt = if_not_exists(joinedAt, :now)',
+      ExpressionAttributeValues: { ':n': authorName, ':zero': 0, ':now': new Date().toISOString() }
     }));
     res.status(201).json(comment);
   } catch (err) {
@@ -704,6 +705,49 @@ app.post('/api/community/comments/:id/upvote', requireMember, async (req, res) =
   }
 });
 
+
+// ── Profile API ───────────────────────────────────────────────────
+
+// GET /api/profile/:sub
+app.get('/api/profile/:sub', async (req, res) => {
+  try {
+    const userResult = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub: req.params.sub } }));
+    if (!userResult.Item) return res.status(404).json({ error: 'Profile not found.' });
+    const { sub, displayName, karma, bio, joinedAt } = userResult.Item;
+
+    const postsResult = await db.send(new ScanCommand({
+      TableName: COMMUNITY_POSTS_TABLE,
+      FilterExpression: 'authorSub = :sub',
+      ExpressionAttributeValues: { ':sub': req.params.sub }
+    }));
+    const posts = (postsResult.Items || [])
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .map(stripVoters);
+
+    res.json({ sub, displayName, karma: karma || 0, bio: bio || '', joinedAt: joinedAt || null, posts });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to load profile.' });
+  }
+});
+
+// PUT /api/profile (update own bio)
+app.put('/api/profile', requireMember, async (req, res) => {
+  const { bio } = req.body;
+  if (typeof bio !== 'string') return res.status(400).json({ error: 'Bio required.' });
+  try {
+    await db.send(new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: { sub: req.user.sub },
+      UpdateExpression: 'SET bio = :bio',
+      ExpressionAttributeValues: { ':bio': bio.trim().slice(0, 500) }
+    }));
+    res.json({ bio: bio.trim().slice(0, 500) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update bio.' });
+  }
+});
 
 // ── Polls API ─────────────────────────────────────────────────────
 

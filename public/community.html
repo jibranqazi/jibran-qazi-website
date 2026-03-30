@@ -216,6 +216,13 @@
       border-bottom: 1px solid var(--mid);
     }
 
+    .author-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .author-link:hover { color: var(--black); }
+
     /* ── Modal ── */
     .modal-overlay {
       position: fixed;
@@ -422,7 +429,7 @@
             </div>
             <div class="post-content" onclick="location.href='/community/${esc(p.id)}'">
               <span class="post-title-link">${esc(p.title)}</span>
-              <span class="post-meta-line">${esc(p.authorName)} · ${timeAgo(p.createdAt)} · ${comments} comment${comments !== 1 ? 's' : ''}</span>
+              <span class="post-meta-line"><a href="/community/profile/${esc(p.authorSub)}" class="author-link" onclick="event.stopPropagation()">${esc(p.authorName)}</a> · ${timeAgo(p.createdAt)} · ${comments} comment${comments !== 1 ? 's' : ''}</span>
             </div>
           </div>`;
         }).join('');
