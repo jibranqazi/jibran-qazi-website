@@ -849,14 +849,60 @@ app.get('/api/chat/history', async (req, res) => {
   }
 });
 
-// GET /api/chat/me — token balance + owned powers
+// GET /api/chat/me — token balance + owned powers + pawn
 app.get('/api/chat/me', requireMember, async (req, res) => {
   try {
     const r = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub: req.user.sub } }));
     const user = r.Item || {};
-    res.json({ tokens: user.tokens ?? 100, powers: user.powers || [] });
+    res.json({ tokens: user.tokens ?? 100, powers: user.powers || [], pawn: user.pawn || 'thread', ownedPawns: user.ownedPawns || ['thread'] });
   } catch (err) {
     res.status(500).json({ error: 'Failed to load profile.' });
+  }
+});
+
+// POST /api/chat/pawn/buy
+app.post('/api/chat/pawn/buy', requireMember, async (req, res) => {
+  const { pawn, cost } = req.body;
+  const valid = ['artisan', 'maison'];
+  if (!valid.includes(pawn)) return res.status(400).json({ error: 'Invalid pawn.' });
+  try {
+    const r = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub: req.user.sub } }));
+    const user = r.Item || {};
+    const tokens = user.tokens ?? 100;
+    const ownedPawns = user.ownedPawns || ['thread'];
+    if (ownedPawns.includes(pawn)) return res.status(409).json({ error: 'Already owned.' });
+    if (tokens < cost) return res.status(402).json({ error: 'Not enough tokens.' });
+    await db.send(new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: { sub: req.user.sub },
+      UpdateExpression: 'SET tokens = :t, ownedPawns = list_append(if_not_exists(ownedPawns, :empty), :p), #pw = :pw',
+      ExpressionAttributeNames: { '#pw': 'pawn' },
+      ExpressionAttributeValues: { ':t': tokens - cost, ':p': [pawn], ':empty': ['thread'], ':pw': pawn }
+    }));
+    res.json({ tokens: tokens - cost, pawn, ownedPawns: [...ownedPawns, pawn] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to purchase pawn.' });
+  }
+});
+
+// POST /api/chat/pawn/equip
+app.post('/api/chat/pawn/equip', requireMember, async (req, res) => {
+  const { pawn } = req.body;
+  try {
+    const r = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub: req.user.sub } }));
+    const ownedPawns = r.Item?.ownedPawns || ['thread'];
+    if (!ownedPawns.includes(pawn)) return res.status(403).json({ error: 'Pawn not owned.' });
+    await db.send(new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: { sub: req.user.sub },
+      UpdateExpression: 'SET #pw = :pw',
+      ExpressionAttributeNames: { '#pw': 'pawn' },
+      ExpressionAttributeValues: { ':pw': pawn }
+    }));
+    res.json({ pawn });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to equip pawn.' });
   }
 });
 
@@ -908,6 +954,8 @@ io.on('connection', socket => {
     let role = 'guest';
     let sub = null;
     let powers = [];
+    let pawn = null;
+    let memberInfo = null;
 
     if (token) {
       try {
@@ -921,6 +969,13 @@ io.on('connection', socket => {
         // Check if this user is the site owner
         const userRecord = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub } }));
         powers = userRecord.Item?.powers || [];
+        pawn = userRecord.Item?.pawn || 'thread';
+        memberInfo = {
+          chatId: 'JQ-' + sub.replace(/-/g, '').substring(0, 8).toUpperCase(),
+          tokens: userRecord.Item?.tokens ?? 100,
+          pawn,
+          ownedPawns: userRecord.Item?.ownedPawns || ['thread']
+        };
         // Seed starter tokens
         if (userRecord.Item && (userRecord.Item.tokens === undefined)) {
           await db.send(new UpdateCommand({
@@ -935,8 +990,8 @@ io.on('connection', socket => {
       name = (guestName || 'Guest').trim().slice(0, 32) || 'Guest';
     }
 
-    onlineUsers.set(socket.id, { name, role, sub, powers });
-    socket.userInfo = { name, role, sub, powers };
+    onlineUsers.set(socket.id, { name, role, sub, powers, pawn });
+    socket.userInfo = { name, role, sub, powers, pawn };
 
     // Send history + current users to this socket
     try {
@@ -947,6 +1002,14 @@ io.on('connection', socket => {
       socket.emit('history', history);
     } catch { socket.emit('history', []); }
 
+    // Send personal info back to this socket only
+    if (memberInfo) {
+      socket.emit('my_info', memberInfo);
+    } else {
+      // Guest gets a session ID
+      socket.emit('my_info', { chatId: 'G-' + socket.id.substring(0, 8).toUpperCase() });
+    }
+
     socket.emit('users', Array.from(onlineUsers.values()));
     io.emit('user_joined', { name, role });
     io.emit('users', Array.from(onlineUsers.values()));
@@ -954,7 +1017,7 @@ io.on('connection', socket => {
 
   socket.on('message', async ({ text }) => {
     if (!socket.userInfo) return;
-    const { name, role, sub, powers } = socket.userInfo;
+    const { name, role, sub, powers, pawn } = socket.userInfo;
     const clean = (text || '').trim().slice(0, 1000);
     if (!clean) return;
     const msg = {
@@ -964,6 +1027,7 @@ io.on('connection', socket => {
       authorSub: sub,
       role,
       powers,
+      pawn: pawn || 'thread',
       createdAt: new Date().toISOString()
     };
     io.emit('message', msg);

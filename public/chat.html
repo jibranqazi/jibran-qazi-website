@@ -16,6 +16,7 @@
       --c-input-bg: #0e0c22; --c-text: #d4d0f0; --c-muted: #6e6a96;
       --c-online: #34d399; --c-gold: #fbbf24;
       --c-owner: #f59e0b; --c-mod: #34d399; --c-member: #a78bfa;
+      --c-rose: #f4a3c0;
     }
     html, body { height: 100%; overflow: hidden; }
     body {
@@ -83,6 +84,7 @@
     .power-badge { font-size: 13px; line-height: 1; }
     .msg-time { font-size: 9px; color: var(--c-muted); margin-left: auto; letter-spacing: 0.05em; }
     .msg-bubble { display: inline-block; background: var(--c-other-bg); color: var(--c-other-text); padding: 6px 10px; font-size: 12.5px; line-height: 1.55; word-break: break-word; border-radius: 0 6px 6px 6px; max-width: 480px; }
+    .msg-bubble .sticker { width: 48px; height: 48px; display: inline-block; vertical-align: middle; margin: 2px 1px; }
     .input-area { flex-shrink: 0; border-top: 1px solid var(--c-border); background: var(--c-input-bg); }
     .input-toolbar { display: flex; align-items: center; gap: 2px; padding: 6px 10px 4px; border-bottom: 1px solid var(--c-border); }
     .tool-btn { background: none; border: none; cursor: pointer; color: var(--c-muted); font-size: 14px; padding: 3px 6px; border-radius: 4px; transition: background 0.15s, color 0.15s; font-family: 'Inter', sans-serif; line-height: 1; }
@@ -113,17 +115,30 @@
     .user-status { font-size: 9px; color: var(--c-muted); margin-top: 1px; }
     .sidebar-footer { flex-shrink: 0; padding: 10px 12px; border-top: 1px solid var(--c-border); }
     .sidebar-footer p { font-size: 9px; color: var(--c-muted); letter-spacing: 0.04em; line-height: 1.7; }
-    /* Emoji panel */
-    .emoji-panel { position: absolute; bottom: 80px; left: 10px; width: 300px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 50; display: none; }
-    .emoji-panel.open { display: block; }
-    .emoji-tabs { display: flex; border-bottom: 1px solid var(--c-border); }
-    .emoji-tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 14px; cursor: pointer; background: none; border: none; transition: background 0.12s; }
-    .emoji-tab:hover { background: rgba(124,111,205,0.1); }
-    .emoji-tab.active { background: rgba(124,111,205,0.15); border-bottom: 2px solid var(--c-accent); }
-    .emoji-grid { display: grid; grid-template-columns: repeat(8,1fr); padding: 8px; gap: 2px; max-height: 180px; overflow-y: auto; }
-    .emoji-btn { font-size: 20px; padding: 4px; text-align: center; cursor: pointer; border-radius: 4px; background: none; border: none; transition: background 0.1s; line-height: 1.3; }
-    .emoji-btn:hover { background: rgba(124,111,205,0.15); }
-    /* Store modal */
+
+    /* ── Pawn SVGs ── */
+    .pawn-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .pawn-icon svg { display: block; }
+
+    /* ── Sticker panel ── */
+    .sticker-panel { position: absolute; bottom: 80px; left: 10px; width: 320px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 50; display: none; }
+    .sticker-panel.open { display: block; }
+    .sticker-panel-header { padding: 10px 14px 8px; border-bottom: 1px solid var(--c-border); font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--c-muted); }
+    .sticker-grid { display: grid; grid-template-columns: repeat(6,1fr); padding: 10px 8px; gap: 4px; max-height: 200px; overflow-y: auto; }
+    .sticker-btn { width: 44px; height: 44px; padding: 6px; cursor: pointer; border-radius: 6px; background: none; border: none; transition: background 0.1s; display: flex; align-items: center; justify-content: center; }
+    .sticker-btn:hover { background: rgba(124,111,205,0.15); }
+    .sticker-btn svg { width: 32px; height: 32px; }
+
+    /* ── ID popover ── */
+    .id-popover { position: fixed; background: var(--c-surface2); border: 1px solid var(--c-accent); border-radius: 8px; padding: 14px 16px; z-index: 200; min-width: 200px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
+    .id-popover.hidden { display: none; }
+    .id-popover-label { font-size: 8px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--c-muted); margin-bottom: 6px; }
+    .id-popover-value { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--c-accent2); letter-spacing: 0.08em; margin-bottom: 10px; }
+    .id-copy-btn { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-muted); background: none; border: 1px solid var(--c-border); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-family: 'Inter', sans-serif; transition: color 0.15s, border-color 0.15s; }
+    .id-copy-btn:hover { color: var(--c-accent2); border-color: var(--c-accent); }
+    .id-popover-close { position: absolute; top: 8px; right: 10px; background: none; border: none; cursor: pointer; color: var(--c-muted); font-size: 14px; line-height: 1; }
+
+    /* ── Store modal ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
     .modal-overlay.hidden { display: none; }
     .store-modal { background: var(--c-bg); border: 1px solid var(--c-border); width: 100%; max-width: 680px; border-radius: 12px; overflow: hidden; max-height: 85vh; display: flex; flex-direction: column; }
@@ -154,6 +169,25 @@
     .power-buy-btn { width: 100%; background: linear-gradient(135deg,var(--c-accent),var(--c-accent2)); color: #fff; border: none; border-radius: 5px; padding: 7px; font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; }
     .power-buy-btn:hover { opacity: 0.85; }
     .power-buy-btn.owned-btn { background: rgba(52,211,153,0.15); color: var(--c-online); cursor: default; }
+    .power-buy-btn.equip-btn { background: rgba(167,139,250,0.2); color: var(--c-accent2); border: 1px solid rgba(167,139,250,0.4); }
+    .power-buy-btn.active-btn { background: rgba(52,211,153,0.15); color: var(--c-online); cursor: default; border: 1px solid rgba(52,211,153,0.3); }
+
+    /* Pawn cards */
+    .pawns-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .pawn-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 10px; padding: 20px 16px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; position: relative; transition: border-color 0.15s; }
+    .pawn-card.tier-artisan { border-color: rgba(251,191,36,0.25); }
+    .pawn-card.tier-maison  { border-color: rgba(244,163,192,0.25); }
+    .pawn-card.active-pawn  { border-color: var(--c-online) !important; }
+    .pawn-card.active-pawn::after { content: 'Active'; position: absolute; top: 8px; right: 10px; font-size: 8px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--c-online); }
+    .pawn-svg-wrap { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+    .pawn-tier-name { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; letter-spacing: 0.04em; }
+    .pawn-tier-name.thread  { color: var(--c-accent2); }
+    .pawn-tier-name.artisan { color: var(--c-gold); }
+    .pawn-tier-name.maison  { color: var(--c-rose); }
+    .pawn-tier-sub { font-size: 10px; color: var(--c-muted); text-align: center; line-height: 1.5; }
+    .pawn-tier-price { font-size: 11px; color: var(--c-gold); }
+    .pawn-free-badge { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-online); background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); padding: 2px 8px; border-radius: 4px; }
+
     .token-packs { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
     .token-pack { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; padding: 20px 14px; text-align: center; cursor: pointer; transition: border-color 0.15s; position: relative; }
     .token-pack:hover { border-color: var(--c-gold); }
@@ -164,6 +198,7 @@
     .pack-price { font-size: 14px; color: var(--c-text); font-weight: 400; margin-bottom: 10px; }
     .pack-buy-btn { width: 100%; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: var(--c-gold); padding: 7px; border-radius: 5px; font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; }
     .pack-buy-btn:hover { background: rgba(251,191,36,0.2); }
+
     /* Guest modal */
     .name-modal { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 12px; width: 100%; max-width: 380px; padding: 36px 32px; }
     .name-modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--c-accent2); margin-bottom: 6px; }
@@ -201,20 +236,22 @@
       </div>
       <div class="chat-header-right">
         <span class="online-pill"><span class="online-dot"></span><span id="online-count">0</span> online</span>
-        <button class="header-icon-btn" title="The Atelier" onclick="openStore()">🏪</button>
+        <button class="header-icon-btn" title="The Atelier" onclick="openStore()">✦</button>
       </div>
     </div>
 
     <div class="chat-body">
       <div class="chat-messages-col">
-        <div class="emoji-panel" id="emoji-panel">
-          <div class="emoji-tabs" id="emoji-tabs"></div>
-          <div class="emoji-grid" id="emoji-grid"></div>
+        <div class="sticker-panel" id="sticker-panel">
+          <div class="sticker-panel-header">Stickers — JQ Collection</div>
+          <div class="sticker-grid" id="sticker-grid"></div>
         </div>
         <div class="messages-scroll" id="messages"></div>
         <div class="input-area">
           <div class="input-toolbar">
-            <button class="tool-btn" onclick="toggleEmojiPanel()">😊</button>
+            <button class="tool-btn" title="Stickers" onclick="toggleStickerPanel()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.2"/><circle cx="5.5" cy="6.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="6.5" r="0.8" fill="currentColor"/><path d="M5 10c.8 1.2 5.2 1.2 6 0" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+            </button>
             <div class="tool-separator"></div>
             <button class="tool-btn atelier-btn" onclick="openStore()">✦ Atelier</button>
           </div>
@@ -233,6 +270,14 @@
     </div>
   </div>
 
+  <!-- ID popover -->
+  <div class="id-popover hidden" id="id-popover">
+    <button class="id-popover-close" onclick="closeIdPopover()">×</button>
+    <div class="id-popover-label">Your Chat ID</div>
+    <div class="id-popover-value" id="id-popover-value">—</div>
+    <button class="id-copy-btn" id="id-copy-btn" onclick="copyId()">Copy</button>
+  </div>
+
   <!-- Store modal -->
   <div class="modal-overlay hidden" id="store-overlay">
     <div class="store-modal">
@@ -245,12 +290,18 @@
       </div>
       <div class="store-tabs">
         <button class="store-tab active" onclick="setStoreTab('powers',this)">Powers</button>
+        <button class="store-tab" onclick="setStoreTab('pawns',this)">Pawns</button>
         <button class="store-tab" onclick="setStoreTab('tokens',this)">Get Tokens</button>
       </div>
       <div class="store-body">
         <div id="tab-powers">
           <p class="store-section-label" style="margin-bottom:16px;">Profile &amp; Chat Powers</p>
           <div class="powers-grid" id="powers-grid"></div>
+        </div>
+        <div id="tab-pawns" style="display:none">
+          <p class="store-section-label" style="margin-bottom:4px;">Pawn Status</p>
+          <p style="font-size:11px;color:var(--c-muted);margin-bottom:20px;line-height:1.7;">Your pawn appears next to your name in the chat. Unlock higher tiers to show your status in the room.</p>
+          <div class="pawns-grid" id="pawns-grid"></div>
         </div>
         <div id="tab-tokens" style="display:none">
           <p class="store-section-label" style="margin-bottom:4px;">Your balance: <span id="token-balance-label" style="color:var(--c-gold);">—</span></p>
@@ -279,39 +330,70 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const ACCESS = localStorage.getItem('jq_access');
+
+    // ── SVG sticker definitions ────────────────────────────────────
+    const STICKERS = {
+      gem: { label: 'Gem', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="20,4 36,14 36,26 20,36 4,26 4,14" stroke="#a78bfa" stroke-width="1.5" fill="none"/><polygon points="20,4 28,14 20,24 12,14" stroke="#a78bfa" stroke-width="1" fill="rgba(167,139,250,0.08)"/><line x1="4" y1="14" x2="36" y2="14" stroke="#a78bfa" stroke-width="1" opacity="0.5"/></svg>` },
+      crown: { label: 'Crown', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="4,28 4,16 12,22 20,10 28,22 36,16 36,28" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-linejoin="round"/><line x1="4" y1="28" x2="36" y2="28" stroke="#fbbf24" stroke-width="1.5"/><circle cx="4" cy="16" r="2" fill="#fbbf24"/><circle cx="20" cy="10" r="2" fill="#fbbf24"/><circle cx="36" cy="16" r="2" fill="#fbbf24"/></svg>` },
+      scissors: { label: 'Scissors', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="14" r="5" stroke="#a78bfa" stroke-width="1.3"/><circle cx="10" cy="26" r="5" stroke="#a78bfa" stroke-width="1.3"/><line x1="14.5" y1="17" x2="34" y2="34" stroke="#a78bfa" stroke-width="1.3" stroke-linecap="round"/><line x1="14.5" y1="23" x2="34" y2="8" stroke="#a78bfa" stroke-width="1.3" stroke-linecap="round"/><line x1="7" y1="14" x2="13" y2="14" stroke="#a78bfa" stroke-width="1" stroke-linecap="round"/><line x1="7" y1="26" x2="13" y2="26" stroke="#a78bfa" stroke-width="1" stroke-linecap="round"/></svg>` },
+      hanger: { label: 'Hanger', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 10 A4 4 0 0 1 24 14 L4 28 H36 L20 18 L16 14 A4 4 0 0 1 20 10Z" stroke="#a78bfa" stroke-width="1.3" fill="none" stroke-linejoin="round"/><path d="M20 6 Q23 6 23 10" stroke="#a78bfa" stroke-width="1.2" fill="none"/></svg>` },
+      thread: { label: 'Thread', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="12" stroke="#a78bfa" stroke-width="1.3"/><circle cx="20" cy="20" r="6" stroke="#a78bfa" stroke-width="1" opacity="0.5"/><circle cx="20" cy="20" r="2" fill="#a78bfa"/><path d="M20 8 Q30 14 30 20 Q30 26 20 32" stroke="#a78bfa" stroke-width="0.8" fill="none" opacity="0.4"/><path d="M20 8 Q10 14 10 20 Q10 26 20 32" stroke="#a78bfa" stroke-width="0.8" fill="none" opacity="0.4"/></svg>` },
+      star: { label: 'Star', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><polygon points="20,4 24.5,15.5 37,15.5 27,23.5 30.5,35 20,28 9.5,35 13,23.5 3,15.5 15.5,15.5" stroke="#fbbf24" stroke-width="1.3" fill="rgba(251,191,36,0.06)" stroke-linejoin="round"/></svg>` },
+      coupe: { label: 'Coupe', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 Q8 22 20 26 Q32 22 32 8Z" stroke="#a78bfa" stroke-width="1.3" fill="rgba(167,139,250,0.06)"/><line x1="20" y1="26" x2="20" y2="34" stroke="#a78bfa" stroke-width="1.3"/><line x1="13" y1="34" x2="27" y2="34" stroke="#a78bfa" stroke-width="1.3" stroke-linecap="round"/><line x1="8" y1="14" x2="32" y2="14" stroke="#a78bfa" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.4"/></svg>` },
+      palette: { label: 'Palette', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 20 A12 12 0 1 1 30 30 Q26 34 22 30 Q18 26 22 22 Q26 18 20 16" stroke="#a78bfa" stroke-width="1.3" fill="none"/><circle cx="14" cy="12" r="2" fill="#a78bfa" opacity="0.6"/><circle cx="22" cy="10" r="2" fill="#fbbf24" opacity="0.6"/><circle cx="29" cy="14" r="2" fill="#f4a3c0" opacity="0.6"/><circle cx="30" cy="22" r="2" fill="#34d399" opacity="0.6"/></svg>` },
+      bow: { label: 'Bow', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 20 Q12 14 6 16 Q6 22 12 22 Q16 22 20 20Z" stroke="#f4a3c0" stroke-width="1.3" fill="rgba(244,163,192,0.08)"/><path d="M20 20 Q28 14 34 16 Q34 22 28 22 Q24 22 20 20Z" stroke="#f4a3c0" stroke-width="1.3" fill="rgba(244,163,192,0.08)"/><path d="M20 20 Q14 22 12 26 Q16 28 20 24" stroke="#f4a3c0" stroke-width="1.1" fill="none"/><path d="M20 20 Q26 22 28 26 Q24 28 20 24" stroke="#f4a3c0" stroke-width="1.1" fill="none"/><circle cx="20" cy="20" r="2.5" fill="#f4a3c0" opacity="0.7"/></svg>` },
+      heart: { label: 'Heart', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 32 Q6 22 6 14 A7 7 0 0 1 20 11 A7 7 0 0 1 34 14 Q34 22 20 32Z" stroke="#f4a3c0" stroke-width="1.3" fill="rgba(244,163,192,0.1)"/></svg>` },
+      jacket: { label: 'Jacket', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 6 L6 12 L8 32 L32 32 L34 12 L26 6 L22 14 L20 12 L18 14Z" stroke="#a78bfa" stroke-width="1.3" fill="none" stroke-linejoin="round"/><path d="M14 6 L14 14" stroke="#a78bfa" stroke-width="1" opacity="0.5"/><path d="M26 6 L26 14" stroke="#a78bfa" stroke-width="1" opacity="0.5"/><line x1="20" y1="14" x2="20" y2="32" stroke="#a78bfa" stroke-width="0.8" stroke-dasharray="2 2" opacity="0.4"/></svg>` },
+      nyc: { label: 'NYC', svg: `<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="22" width="4" height="12" stroke="#a78bfa" stroke-width="1"/><rect x="10" y="16" width="5" height="18" stroke="#a78bfa" stroke-width="1"/><rect x="17" y="10" width="4" height="24" stroke="#a78bfa" stroke-width="1"/><rect x="23" y="18" width="5" height="16" stroke="#a78bfa" stroke-width="1"/><rect x="30" y="14" width="6" height="20" stroke="#a78bfa" stroke-width="1"/><line x1="2" y1="34" x2="38" y2="34" stroke="#a78bfa" stroke-width="1"/><rect x="19" y="6" width="2" height="4" fill="#a78bfa" opacity="0.6"/></svg>` },
+    };
+
+    const STICKER_KEYS = Object.keys(STICKERS);
+
+    // Pawn SVG shapes
+    function pawnSvg(tier, size) {
+      const s = size || 14;
+      if (tier === 'artisan') {
+        // 4-pointed star/diamond shape in gold
+        return `<svg width="${s}" height="${s}" viewBox="0 0 14 14" fill="none"><path d="M7 1 L8.5 5.5 L13 7 L8.5 8.5 L7 13 L5.5 8.5 L1 7 L5.5 5.5Z" stroke="#fbbf24" stroke-width="1" fill="rgba(251,191,36,0.15)" stroke-linejoin="round"/></svg>`;
+      } else if (tier === 'maison') {
+        // Ornate pawn shape in rose gold gradient
+        return `<svg width="${s}" height="${s}" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="4" r="2.5" stroke="#f4a3c0" stroke-width="1"/><path d="M5 6.5 Q4 8 3.5 10 L10.5 10 Q10 8 9 6.5Z" stroke="#f4a3c0" stroke-width="1" fill="rgba(244,163,192,0.12)" stroke-linejoin="round"/><line x1="3" y1="11" x2="11" y2="11" stroke="#f4a3c0" stroke-width="1" stroke-linecap="round"/></svg>`;
+      } else {
+        // Thread: simple circle in purple
+        return `<svg width="${s}" height="${s}" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="#7c6fcd" stroke-width="1.2" fill="rgba(124,111,205,0.12)"/><circle cx="7" cy="7" r="2" fill="#7c6fcd" opacity="0.5"/></svg>`;
+      }
+    }
+
     const POWERS_LIST = [
       { id: 'crown',   icon: '👑', name: 'Crown',    desc: 'Crown icon next to your name',            cost: 50  },
       { id: 'flame',   icon: '🔥', name: 'Flame',    desc: 'Flame badge — shows you\'re active',      cost: 75  },
       { id: 'diamond', icon: '💎', name: 'Diamond',  desc: 'Exclusive diamond badge',                 cost: 200 },
-      { id: 'star',    icon: '⭐', name: 'Star',     desc: 'Gold star in the user list',              cost: 100 },
+      { id: 'ribbon',  icon: '🎀', name: 'Ribbon',   desc: 'Silk ribbon badge next to your name',     cost: 100 },
       { id: 'rainbow', icon: '🌈', name: 'Rainbow',  desc: 'Animated rainbow glow on your name',     cost: 300 },
       { id: 'ghost',   icon: '👻', name: 'Ghost',    desc: 'Appear invisible in the user list',       cost: 150 },
       { id: 'color',   icon: '🎭', name: 'Color',    desc: 'Set a custom colour for your name',       cost: 80  },
       { id: 'trophy',  icon: '🏆', name: 'Trophy',   desc: 'Awarded to long-standing members',        cost: 500 },
-      { id: 'jester',  icon: '🎪', name: 'Jester',   desc: 'Animated jester hat — for the fun ones', cost: 120 },
+      { id: 'needle',  icon: '🧵', name: 'Needle',   desc: 'Tailor\'s needle — a craftsman\'s mark',  cost: 120 },
     ];
-    const POWER_ICONS = { crown:'👑', flame:'🔥', diamond:'💎', star:'⭐', rainbow:'🌈', ghost:'👻', color:'🎭', trophy:'🏆', jester:'🎪' };
+    const POWER_ICONS = { crown:'👑', flame:'🔥', diamond:'💎', ribbon:'🎀', rainbow:'🌈', ghost:'👻', color:'🎭', trophy:'🏆', needle:'🧵' };
 
-    const EMOJI_SETS = [
-      { tab:'😀', emojis:['😀','😂','😍','🥰','😎','🤩','😅','😭','🥺','😤','🤔','😏','😇','🤗','😴','🤯','🥳','😬','🤭','😮'] },
-      { tab:'❤️', emojis:['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💕','💞','💓','💗','💖','💘','💝','💟','❣️','♥️','💔','🫀'] },
-      { tab:'🎉', emojis:['🎉','🎊','🎈','🎁','🎀','🪅','🎆','🎇','✨','🌟','💫','⭐','🌠','🎵','🎶','🎸','🎤','🎭','🎪','🎠'] },
-      { tab:'👍', emojis:['👍','👎','👏','🙌','🤝','👊','✊','🤛','🤜','🤙','👋','🤚','✋','🖐️','👌','🤌','🤏','✌️','🤞','🫶'] },
-      { tab:'🌟', emojis:['🌟','⭐','💫','✨','🌈','☀️','🌙','⚡','❄️','🌊','🔥','💨','🌸','🌺','🌻','🌹','🍀','🌿','🌴','🦋'] },
-      { tab:'🔥', emojis:['🔥','💯','🚀','⚡','🎯','🏆','👑','💎','🏅','🥇','🎖️','🌊','💪','🦁','🐯','⚔️','🛡️','⭐','🌟','✨'] },
+    const PAWNS_LIST = [
+      { id: 'thread',  tierName: 'Thread',  cost: 0,   desc: 'The first mark. Every member begins here.' },
+      { id: 'artisan', tierName: 'Artisan', cost: 250, desc: 'A craftsman\'s tier. Shown in gold.' },
+      { id: 'maison',  tierName: 'Maison',  cost: 750, desc: 'The house mark. Rose gold, reserved for few.' },
     ];
 
     let myTokens = 100;
     let myPowers = [];
+    let myPawn = 'thread';
+    let myOwnedPawns = ['thread'];
+    let myChatId = null;
     let socket;
     let lastAuthorId = null;
     let lastMsgTime = null;
 
     function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-    function fmtTime(iso) {
-      return new Date(iso).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
-    }
+    function fmtTime(iso) { return new Date(iso).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }); }
 
     // ── Auth nav ──────────────────────────────────────────────────
     function renderAuthNav() {
@@ -329,40 +411,65 @@
       location.href='/';
     }
 
-    // ── Emoji panel ───────────────────────────────────────────────
-    function initEmojis() {
-      const tabs = document.getElementById('emoji-tabs');
-      tabs.innerHTML = EMOJI_SETS.map((s,i) =>
-        `<button class="emoji-tab${i===0?' active':''}" onclick="setEmojiTab(${i},this)">${s.tab}</button>`
-      ).join('');
-      renderEmojiGrid(0);
-    }
-    function setEmojiTab(idx, btn) {
-      document.querySelectorAll('.emoji-tab').forEach(t=>t.classList.remove('active'));
-      btn.classList.add('active');
-      renderEmojiGrid(idx);
-    }
-    function renderEmojiGrid(idx) {
-      document.getElementById('emoji-grid').innerHTML = EMOJI_SETS[idx].emojis.map(e =>
-        `<button class="emoji-btn" onclick="insertEmoji('${e}')">${e}</button>`
+    // ── Sticker panel ─────────────────────────────────────────────
+    function initStickers() {
+      document.getElementById('sticker-grid').innerHTML = STICKER_KEYS.map(k =>
+        `<button class="sticker-btn" title="${STICKERS[k].label}" onclick="insertSticker('${k}')">${STICKERS[k].svg}</button>`
       ).join('');
     }
-    function toggleEmojiPanel() { document.getElementById('emoji-panel').classList.toggle('open'); }
-    function insertEmoji(e) {
+    function toggleStickerPanel() { document.getElementById('sticker-panel').classList.toggle('open'); }
+    function insertSticker(key) {
       const input = document.getElementById('chat-input');
-      input.value += e; input.focus();
+      input.value += ` [sticker:${key}]`;
+      input.focus();
+      document.getElementById('sticker-panel').classList.remove('open');
     }
     document.addEventListener('click', e => {
-      const panel = document.getElementById('emoji-panel');
+      const panel = document.getElementById('sticker-panel');
       if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('.tool-btn')) {
         panel.classList.remove('open');
       }
+      if (!document.getElementById('id-popover').classList.contains('hidden')) {
+        if (!e.target.closest('#id-popover') && !e.target.closest('.msg-name') && !e.target.closest('.user-item')) {
+          closeIdPopover();
+        }
+      }
     });
+
+    // ── Render sticker codes in text ──────────────────────────────
+    function renderText(text) {
+      const escaped = esc(text);
+      return escaped.replace(/\[sticker:([a-z]+)\]/g, (_, key) => {
+        const s = STICKERS[key];
+        if (!s) return `[sticker:${esc(key)}]`;
+        return `<span class="sticker" title="${s.label}">${s.svg}</span>`;
+      });
+    }
+
+    // ── ID popover ────────────────────────────────────────────────
+    function showIdPopover(chatId, anchorEl) {
+      const pop = document.getElementById('id-popover');
+      document.getElementById('id-popover-value').textContent = chatId;
+      pop.classList.remove('hidden');
+      // Position near the anchor element
+      const rect = anchorEl.getBoundingClientRect();
+      pop.style.top = (rect.bottom + 8) + 'px';
+      pop.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+    }
+    function closeIdPopover() { document.getElementById('id-popover').classList.add('hidden'); }
+    function copyId() {
+      const val = document.getElementById('id-popover-value').textContent;
+      navigator.clipboard.writeText(val).catch(() => {});
+      const btn = document.getElementById('id-copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    }
 
     // ── Store ─────────────────────────────────────────────────────
     function openStore() {
       if (!ACCESS) { document.getElementById('name-modal').classList.remove('hidden'); return; }
       renderPowers();
+      renderPawns();
       document.getElementById('store-overlay').classList.remove('hidden');
     }
     function closeStore() { document.getElementById('store-overlay').classList.add('hidden'); }
@@ -370,7 +477,8 @@
       document.querySelectorAll('.store-tab').forEach(t=>t.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('tab-powers').style.display = tab==='powers' ? '' : 'none';
-      document.getElementById('tab-tokens').style.display  = tab==='tokens'  ? '' : 'none';
+      document.getElementById('tab-pawns').style.display  = tab==='pawns'  ? '' : 'none';
+      document.getElementById('tab-tokens').style.display = tab==='tokens' ? '' : 'none';
     }
     document.getElementById('store-overlay').addEventListener('click', e => {
       if (e.target === document.getElementById('store-overlay')) closeStore();
@@ -393,6 +501,30 @@
       }).join('');
     }
 
+    function renderPawns() {
+      document.getElementById('pawns-grid').innerHTML = PAWNS_LIST.map(p => {
+        const owned = myOwnedPawns.includes(p.id);
+        const active = myPawn === p.id;
+        const isThread = p.id === 'thread';
+        let btnHtml;
+        if (active) {
+          btnHtml = `<button class="power-buy-btn active-btn" disabled>Active</button>`;
+        } else if (owned) {
+          btnHtml = `<button class="power-buy-btn equip-btn" onclick="equipPawn('${p.id}',this)">Equip</button>`;
+        } else if (isThread) {
+          btnHtml = `<span class="pawn-free-badge">Free</span>`;
+        } else {
+          btnHtml = `<button class="power-buy-btn" onclick="buyPawn('${p.id}',${p.cost},this)">🪙 ${p.cost} tokens</button>`;
+        }
+        return `<div class="pawn-card tier-${p.id}${active?' active-pawn':''}">
+          <div class="pawn-svg-wrap">${pawnSvg(p.id, 48)}</div>
+          <div class="pawn-tier-name ${p.id}">${p.tierName}</div>
+          <div class="pawn-tier-sub">${p.desc}</div>
+          ${btnHtml}
+        </div>`;
+      }).join('');
+    }
+
     async function buyPower(id, cost, btn) {
       if (myPowers.includes(id)) return;
       if (myTokens < cost) { alert('Not enough tokens. Visit Get Tokens to top up.'); return; }
@@ -408,9 +540,45 @@
         myTokens = data.tokens;
         myPowers = data.powers;
         renderPowers();
-        // Reconnect so new powers show in chat
         socket.emit('authenticate', { token: ACCESS });
       } catch { btn.disabled = false; btn.textContent = 'Buy'; }
+    }
+
+    async function buyPawn(id, cost, btn) {
+      if (myOwnedPawns.includes(id)) return;
+      if (myTokens < cost) { alert('Not enough tokens. Visit Get Tokens to top up.'); return; }
+      btn.disabled = true; btn.textContent = '…';
+      try {
+        const r = await fetch('/api/chat/pawn/buy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ACCESS}` },
+          body: JSON.stringify({ pawn: id, cost })
+        });
+        const data = await r.json();
+        if (!r.ok) { alert(data.error || 'Failed.'); btn.disabled = false; btn.textContent = `🪙 ${cost} tokens`; return; }
+        myTokens = data.tokens;
+        myPawn = data.pawn;
+        myOwnedPawns = data.ownedPawns;
+        renderPawns();
+        document.getElementById('token-display').textContent = myTokens;
+        socket.emit('authenticate', { token: ACCESS });
+      } catch { btn.disabled = false; btn.textContent = `🪙 ${cost} tokens`; }
+    }
+
+    async function equipPawn(id, btn) {
+      btn.disabled = true; btn.textContent = '…';
+      try {
+        const r = await fetch('/api/chat/pawn/equip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ACCESS}` },
+          body: JSON.stringify({ pawn: id })
+        });
+        const data = await r.json();
+        if (!r.ok) { alert(data.error || 'Failed.'); btn.disabled = false; btn.textContent = 'Equip'; return; }
+        myPawn = data.pawn;
+        renderPawns();
+        socket.emit('authenticate', { token: ACCESS });
+      } catch { btn.disabled = false; btn.textContent = 'Equip'; }
     }
 
     // ── Messages ──────────────────────────────────────────────────
@@ -426,6 +594,12 @@
       const isOwner = msg.role === 'owner';
       const roleClass = msg.role || 'guest';
       const initial = (msg.authorName||'?')[0].toUpperCase();
+      const pawn = msg.pawn || (msg.role === 'guest' ? null : 'thread');
+      const pawnHtml = pawn ? `<span class="pawn-icon" style="margin-left:1px;">${pawnSvg(pawn, 13)}</span>` : '';
+
+      // Is this my own name? If so, clicking shows the ID
+      const isMine = myChatId && (msg.authorSub ? msg.authorSub === myChatId.replace('JQ-','').toLowerCase().substring(0,8) : false);
+      const nameClick = `onclick="handleNameClick(event,'${esc(msg.authorName)}')"`;
 
       const row = document.createElement('div');
       row.className = `msg-row${isConsecutive ? ' condensed' : ' gap'}`;
@@ -433,15 +607,29 @@
         <div class="msg-avatar ${roleClass}">${initial}</div>
         <div class="msg-main">
           <div class="msg-header">
-            <span class="msg-name ${roleClass}">${esc(msg.authorName)}</span>
+            <span class="msg-name ${roleClass}" ${nameClick} style="cursor:pointer;" data-sub="${esc(msg.authorSub||'')}">${esc(msg.authorName)}</span>
+            ${pawnHtml}
             ${isOwner ? '<span class="rank-badge owner">Owner</span>' : ''}
             ${powerBadges ? `<span class="power-badge">${powerBadges}</span>` : ''}
             <span class="msg-time">${fmtTime(msg.createdAt)}</span>
           </div>
-          <div class="msg-bubble">${esc(msg.text)}</div>
+          <div class="msg-bubble">${renderText(msg.text)}</div>
         </div>`;
       msgs.appendChild(row);
       if (!isHistory) msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function handleNameClick(event, name) {
+      // Only show ID popup if clicking your own name
+      const el = event.currentTarget;
+      const sub = el.dataset.sub;
+      if (!myChatId) return;
+      // Match: JQ- + first 8 chars of sub (uppercase, no dashes)
+      const mySubFragment = myChatId.startsWith('JQ-') ? myChatId.slice(3).toLowerCase() : null;
+      const msgSubFragment = sub ? sub.replace(/-/g,'').substring(0,8).toLowerCase() : null;
+      if (mySubFragment && msgSubFragment && mySubFragment === msgSubFragment) {
+        showIdPopover(myChatId, el);
+      }
     }
 
     function appendSys(text) {
@@ -461,10 +649,13 @@
         const powerIcons = (u.powers||[]).map(p=>POWER_ICONS[p]||'').join('');
         const roleClass = u.role || 'guest';
         const initial = (u.name||'?')[0].toUpperCase();
-        return `<div class="user-item">
+        const pawn = u.pawn || (u.role === 'guest' ? null : 'thread');
+        const pawnHtml = pawn ? pawnSvg(pawn, 12) : '';
+        return `<div class="user-item" onclick="handleUserItemClick(event,'${esc(u.name)}','${esc(u.sub||'')}')">
           <div class="user-avatar ${roleClass}">${initial}</div>
           <div class="user-info">
             <div style="display:flex;align-items:center;gap:4px;">
+              ${pawnHtml ? `<span class="pawn-icon">${pawnHtml}</span>` : ''}
               <span class="user-display-name ${roleClass}">${esc(u.name)}</span>
               ${powerIcons ? `<span class="user-power-icons">${powerIcons}</span>` : ''}
             </div>
@@ -474,6 +665,15 @@
       }).join('');
     }
 
+    function handleUserItemClick(event, name, sub) {
+      if (!myChatId) return;
+      const mySubFragment = myChatId.startsWith('JQ-') ? myChatId.slice(3).toLowerCase() : null;
+      const itemSubFragment = sub ? sub.replace(/-/g,'').substring(0,8).toLowerCase() : null;
+      if (mySubFragment && itemSubFragment && mySubFragment === itemSubFragment) {
+        showIdPopover(myChatId, event.currentTarget);
+      }
+    }
+
     // ── Send ──────────────────────────────────────────────────────
     function sendMessage() {
       const input = document.getElementById('chat-input');
@@ -481,7 +681,7 @@
       if (!text || !socket) return;
       socket.emit('message', { text });
       input.value = '';
-      document.getElementById('emoji-panel').classList.remove('open');
+      document.getElementById('sticker-panel').classList.remove('open');
     }
     document.getElementById('chat-input').addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
@@ -503,6 +703,12 @@
       socket = io();
       socket.on('connect', () => {
         socket.emit('authenticate', { token, guestName });
+      });
+      socket.on('my_info', info => {
+        myChatId = info.chatId;
+        if (info.tokens !== undefined) myTokens = info.tokens;
+        if (info.pawn) myPawn = info.pawn;
+        if (info.ownedPawns) myOwnedPawns = info.ownedPawns;
       });
       socket.on('history', msgs => {
         const container = document.getElementById('messages');
@@ -526,16 +732,21 @@
     // ── Init ──────────────────────────────────────────────────────
     async function init() {
       renderAuthNav();
-      initEmojis();
+      initStickers();
 
       if (ACCESS) {
         try {
           const r = await fetch('/api/chat/me', { headers: { Authorization: `Bearer ${ACCESS}` } });
-          if (r.ok) { const d = await r.json(); myTokens = d.tokens; myPowers = d.powers; }
+          if (r.ok) {
+            const d = await r.json();
+            myTokens = d.tokens;
+            myPowers = d.powers;
+            myPawn = d.pawn || 'thread';
+            myOwnedPawns = d.ownedPawns || ['thread'];
+          }
         } catch {}
         connectSocket(ACCESS, null);
       } else {
-        // Show guest name modal
         document.getElementById('name-modal').classList.remove('hidden');
         document.getElementById('guest-name-input').focus();
       }
