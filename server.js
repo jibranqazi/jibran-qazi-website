@@ -1,7 +1,9 @@
 const express = require('express');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { Server: SocketIOServer } = require('socket.io');
 const multer = require('multer');
 const { DynamoDBClient, CreateTableCommand, DescribeTableCommand } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, PutCommand, ScanCommand, GetCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
@@ -10,6 +12,8 @@ const { CognitoJwtVerifier } = require('aws-jwt-verify');
 const { SESv2Client, SendEmailCommand } = require('@aws-sdk/client-sesv2');
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new SocketIOServer(httpServer, { cors: { origin: '*' } });
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'jq2026admin';
 const REGION = 'us-east-1';
@@ -19,6 +23,7 @@ const COMMUNITY_POSTS_TABLE = 'jibranqazi-community-posts';
 const COMMUNITY_COMMENTS_TABLE = 'jibranqazi-community-comments';
 const USERS_TABLE = 'jibranqazi-users';
 const COMMUNITY_POLLS_TABLE = 'jibranqazi-community-polls';
+const CHAT_TABLE = 'jibranqazi-chat';
 
 const client = new DynamoDBClient({ region: REGION });
 const db = DynamoDBDocumentClient.from(client);
@@ -185,7 +190,8 @@ async function ensureCommunityTables() {
     { TableName: COMMUNITY_POSTS_TABLE, key: 'id' },
     { TableName: COMMUNITY_COMMENTS_TABLE, key: 'id' },
     { TableName: USERS_TABLE, key: 'sub' },
-    { TableName: COMMUNITY_POLLS_TABLE, key: 'id' }
+    { TableName: COMMUNITY_POLLS_TABLE, key: 'id' },
+    { TableName: CHAT_TABLE, key: 'id' }
   ];
   for (const { TableName, key } of configs) {
     try {
@@ -826,11 +832,159 @@ app.post('/api/community/polls/:id/vote', requireMember, async (req, res) => {
   }
 });
 
+// ── Chat page ─────────────────────────────────────────────────────
+app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'public', 'chat.html')));
+
+// GET /api/chat/history — last 50 messages
+app.get('/api/chat/history', async (req, res) => {
+  try {
+    const result = await db.send(new ScanCommand({ TableName: CHAT_TABLE }));
+    const msgs = (result.Items || [])
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .slice(-50);
+    res.json(msgs);
+  } catch (err) {
+    console.error(err);
+    res.json([]);
+  }
+});
+
+// GET /api/chat/me — token balance + owned powers
+app.get('/api/chat/me', requireMember, async (req, res) => {
+  try {
+    const r = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub: req.user.sub } }));
+    const user = r.Item || {};
+    res.json({ tokens: user.tokens ?? 100, powers: user.powers || [] });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load profile.' });
+  }
+});
+
+// POST /api/chat/powers/buy
+app.post('/api/chat/powers/buy', requireMember, async (req, res) => {
+  const { power, cost } = req.body;
+  if (!power || !cost) return res.status(400).json({ error: 'power and cost required.' });
+  try {
+    const r = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub: req.user.sub } }));
+    const user = r.Item || {};
+    const tokens = user.tokens ?? 100;
+    const powers = user.powers || [];
+    if (powers.includes(power)) return res.status(409).json({ error: 'Already owned.' });
+    if (tokens < cost) return res.status(402).json({ error: 'Not enough tokens.' });
+    await db.send(new UpdateCommand({
+      TableName: USERS_TABLE,
+      Key: { sub: req.user.sub },
+      UpdateExpression: 'SET tokens = :t, powers = list_append(if_not_exists(powers, :empty), :p)',
+      ExpressionAttributeValues: { ':t': tokens - cost, ':p': [power], ':empty': [] }
+    }));
+    res.json({ tokens: tokens - cost, powers: [...powers, power] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to purchase.' });
+  }
+});
+
+// ── Socket.io — real-time chat ────────────────────────────────────
+const onlineUsers = new Map(); // socketId → {name, role, sub, powers}
+
+async function saveChatMessage(msg) {
+  try {
+    await db.send(new PutCommand({ TableName: CHAT_TABLE, Item: msg }));
+    // Prune: keep only last 200 messages
+    const all = await db.send(new ScanCommand({ TableName: CHAT_TABLE }));
+    const sorted = (all.Items || []).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (sorted.length > 200) {
+      const toDelete = sorted.slice(0, sorted.length - 200);
+      await Promise.all(toDelete.map(m => db.send(new DeleteCommand({ TableName: CHAT_TABLE, Key: { id: m.id } }))));
+    }
+  } catch (err) {
+    console.error('Chat save error:', err.message);
+  }
+}
+
+io.on('connection', socket => {
+  socket.on('authenticate', async ({ token, guestName }) => {
+    let name = 'Guest';
+    let role = 'guest';
+    let sub = null;
+    let powers = [];
+
+    if (token) {
+      try {
+        const payload = await jwtVerifier.verify(token);
+        sub = payload.sub;
+        const cognitoUser = await cognito.send(new GetUserCommand({ AccessToken: token }));
+        const attrs = {};
+        cognitoUser.UserAttributes.forEach(a => { attrs[a.Name] = a.Value; });
+        name = attrs.name || attrs.email || 'Member';
+        role = sub === 'jq-owner-sub' ? 'owner' : 'member'; // will match real sub below
+        // Check if this user is the site owner
+        const userRecord = await db.send(new GetCommand({ TableName: USERS_TABLE, Key: { sub } }));
+        powers = userRecord.Item?.powers || [];
+        // Seed starter tokens
+        if (userRecord.Item && (userRecord.Item.tokens === undefined)) {
+          await db.send(new UpdateCommand({
+            TableName: USERS_TABLE,
+            Key: { sub },
+            UpdateExpression: 'SET tokens = if_not_exists(tokens, :t)',
+            ExpressionAttributeValues: { ':t': 100 }
+          }));
+        }
+      } catch { role = 'guest'; name = guestName || 'Guest'; }
+    } else {
+      name = (guestName || 'Guest').trim().slice(0, 32) || 'Guest';
+    }
+
+    onlineUsers.set(socket.id, { name, role, sub, powers });
+    socket.userInfo = { name, role, sub, powers };
+
+    // Send history + current users to this socket
+    try {
+      const result = await db.send(new ScanCommand({ TableName: CHAT_TABLE }));
+      const history = (result.Items || [])
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        .slice(-50);
+      socket.emit('history', history);
+    } catch { socket.emit('history', []); }
+
+    socket.emit('users', Array.from(onlineUsers.values()));
+    io.emit('user_joined', { name, role });
+    io.emit('users', Array.from(onlineUsers.values()));
+  });
+
+  socket.on('message', async ({ text }) => {
+    if (!socket.userInfo) return;
+    const { name, role, sub, powers } = socket.userInfo;
+    const clean = (text || '').trim().slice(0, 1000);
+    if (!clean) return;
+    const msg = {
+      id: crypto.randomUUID(),
+      text: clean,
+      authorName: name,
+      authorSub: sub,
+      role,
+      powers,
+      createdAt: new Date().toISOString()
+    };
+    io.emit('message', msg);
+    saveChatMessage(msg);
+  });
+
+  socket.on('disconnect', () => {
+    const user = onlineUsers.get(socket.id);
+    onlineUsers.delete(socket.id);
+    if (user) {
+      io.emit('user_left', { name: user.name });
+      io.emit('users', Array.from(onlineUsers.values()));
+    }
+  });
+});
+
 // ── Catch-all ─────────────────────────────────────────────────────
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Jibran Qazi server running at http://localhost:${PORT}`);
 });

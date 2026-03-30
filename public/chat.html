@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat — Jibran Qazi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --sand: #ede0cc; --black: #111110; --mid: #888885; --light: #ddd8cf;
+      --c-bg: #13102a; --c-surface: #1c1840; --c-surface2: #231f4f;
+      --c-border: #2e2960; --c-accent: #7c6fcd; --c-accent2: #a78bfa;
+      --c-mine-bg: #5b4fcf; --c-mine-text: #f0edff;
+      --c-other-bg: #201d45; --c-other-text: #e2dfff;
+      --c-input-bg: #0e0c22; --c-text: #d4d0f0; --c-muted: #6e6a96;
+      --c-online: #34d399; --c-gold: #fbbf24;
+      --c-owner: #f59e0b; --c-mod: #34d399; --c-member: #a78bfa;
+    }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      background: var(--sand);
+      font-family: 'Inter', sans-serif; font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      display: flex; flex-direction: column;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 22px 48px; border-bottom: 1px solid var(--light);
+      flex-shrink: 0; background: var(--sand);
+    }
+    .wordmark {
+      font-family: 'Cormorant Garamond', serif; font-size: 13px;
+      font-weight: 300; letter-spacing: 0.5em; text-transform: uppercase;
+      text-decoration: none; color: var(--black);
+    }
+    .header-right { display: flex; align-items: center; gap: 24px; }
+    .nav-link { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--mid); text-decoration: none; transition: color 0.2s; }
+    .nav-link:hover { color: var(--black); }
+    .nav-btn { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--mid); background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 300; transition: color 0.2s; }
+    .nav-btn:hover { color: var(--black); }
+    .chat-shell { flex: 1; display: flex; flex-direction: column; background: var(--c-bg); min-height: 0; }
+    .chat-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; height: 44px; background: var(--c-surface);
+      border-bottom: 1px solid var(--c-border); flex-shrink: 0;
+    }
+    .chat-header-left { display: flex; align-items: center; gap: 12px; }
+    .chat-room-icon { width: 24px; height: 24px; background: linear-gradient(135deg,var(--c-accent),var(--c-accent2)); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    .chat-room-name { font-size: 13px; font-weight: 400; color: var(--c-accent2); letter-spacing: 0.02em; }
+    .chat-room-topic { font-size: 11px; color: var(--c-muted); }
+    .chat-header-right { display: flex; align-items: center; gap: 16px; }
+    .online-pill { display: flex; align-items: center; gap: 6px; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); padding: 3px 10px; border-radius: 20px; font-size: 10px; letter-spacing: 0.15em; color: var(--c-online); }
+    .online-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--c-online); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .header-icon-btn { background: none; border: none; cursor: pointer; color: var(--c-muted); font-size: 15px; transition: color 0.15s; }
+    .header-icon-btn:hover { color: var(--c-accent2); }
+    .chat-body { flex: 1; display: grid; grid-template-columns: 1fr 190px; min-height: 0; }
+    .chat-messages-col { display: flex; flex-direction: column; border-right: 1px solid var(--c-border); min-height: 0; position: relative; }
+    .messages-scroll { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 1px; scrollbar-width: thin; scrollbar-color: var(--c-border) transparent; }
+    .messages-scroll::-webkit-scrollbar { width: 4px; }
+    .messages-scroll::-webkit-scrollbar-thumb { background: var(--c-border); }
+    .day-divider { display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; }
+    .day-divider::before, .day-divider::after { content: ''; flex: 1; height: 1px; background: var(--c-border); }
+    .day-divider-text { font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--c-muted); white-space: nowrap; }
+    .sys-msg { text-align: center; font-size: 10px; letter-spacing: 0.05em; color: var(--c-muted); font-style: italic; padding: 3px 0; }
+    .msg-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; }
+    .msg-row.gap { margin-top: 10px; }
+    .msg-avatar { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 400; flex-shrink: 0; margin-top: 1px; }
+    .msg-avatar.owner { background: linear-gradient(135deg,#f59e0b,#fde68a); color:#1a1008; }
+    .msg-avatar.member { background: linear-gradient(135deg,#5b4fcf,#a78bfa); color:#fff; }
+    .msg-avatar.guest { background: #2a2654; color: var(--c-muted); }
+    .msg-row.condensed .msg-avatar { visibility: hidden; }
+    .msg-main { flex: 1; }
+    .msg-header { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .msg-row.condensed .msg-header { display: none; }
+    .msg-name { font-size: 11px; font-weight: 400; letter-spacing: 0.02em; }
+    .msg-name.owner { color: var(--c-owner); }
+    .msg-name.member { color: var(--c-member); }
+    .msg-name.guest { color: var(--c-muted); }
+    .rank-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; letter-spacing: 0.08em; }
+    .rank-badge.owner { background: rgba(245,158,11,0.15); color: var(--c-owner); border: 1px solid rgba(245,158,11,0.3); }
+    .power-badge { font-size: 13px; line-height: 1; }
+    .msg-time { font-size: 9px; color: var(--c-muted); margin-left: auto; letter-spacing: 0.05em; }
+    .msg-bubble { display: inline-block; background: var(--c-other-bg); color: var(--c-other-text); padding: 6px 10px; font-size: 12.5px; line-height: 1.55; word-break: break-word; border-radius: 0 6px 6px 6px; max-width: 480px; }
+    .input-area { flex-shrink: 0; border-top: 1px solid var(--c-border); background: var(--c-input-bg); }
+    .input-toolbar { display: flex; align-items: center; gap: 2px; padding: 6px 10px 4px; border-bottom: 1px solid var(--c-border); }
+    .tool-btn { background: none; border: none; cursor: pointer; color: var(--c-muted); font-size: 14px; padding: 3px 6px; border-radius: 4px; transition: background 0.15s, color 0.15s; font-family: 'Inter', sans-serif; line-height: 1; }
+    .tool-btn:hover { background: var(--c-border); color: var(--c-accent2); }
+    .tool-separator { width: 1px; height: 16px; background: var(--c-border); margin: 0 4px; }
+    .atelier-btn { background: linear-gradient(135deg,rgba(124,111,205,0.15),rgba(167,139,250,0.15)); border: 1px solid rgba(124,111,205,0.3) !important; color: var(--c-accent2) !important; font-size: 10px !important; letter-spacing: 0.1em; padding: 3px 9px !important; }
+    .atelier-btn:hover { background: rgba(124,111,205,0.25) !important; }
+    .input-row { display: flex; align-items: center; }
+    .chat-input { flex: 1; background: none; border: none; outline: none; padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 300; color: var(--c-text); }
+    .chat-input::placeholder { color: var(--c-muted); }
+    .send-btn { background: var(--c-accent); color: #fff; border: none; padding: 10px 20px; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; }
+    .send-btn:hover { background: var(--c-accent2); }
+    .chat-sidebar { display: flex; flex-direction: column; background: var(--c-surface); min-height: 0; }
+    .sidebar-header { padding: 10px 12px 8px; border-bottom: 1px solid var(--c-border); font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--c-muted); flex-shrink: 0; }
+    .user-list { flex: 1; overflow-y: auto; padding: 6px 0; scrollbar-width: thin; scrollbar-color: var(--c-border) transparent; }
+    .user-item { display: flex; align-items: center; gap: 8px; padding: 5px 12px; cursor: pointer; transition: background 0.12s; }
+    .user-item:hover { background: rgba(124,111,205,0.08); }
+    .user-avatar { width: 22px; height: 22px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 400; flex-shrink: 0; }
+    .user-avatar.owner { background: linear-gradient(135deg,#f59e0b,#fde68a); color:#1a1008; }
+    .user-avatar.member { background: linear-gradient(135deg,#5b4fcf,#a78bfa); color:#fff; }
+    .user-avatar.guest { background: #2a2654; color: var(--c-muted); }
+    .user-info { flex: 1; min-width: 0; }
+    .user-display-name { font-size: 11px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-display-name.owner { color: var(--c-owner); }
+    .user-display-name.member { color: var(--c-member); }
+    .user-display-name.guest { color: var(--c-muted); }
+    .user-power-icons { font-size: 10px; letter-spacing: -1px; }
+    .user-status { font-size: 9px; color: var(--c-muted); margin-top: 1px; }
+    .sidebar-footer { flex-shrink: 0; padding: 10px 12px; border-top: 1px solid var(--c-border); }
+    .sidebar-footer p { font-size: 9px; color: var(--c-muted); letter-spacing: 0.04em; line-height: 1.7; }
+    /* Emoji panel */
+    .emoji-panel { position: absolute; bottom: 80px; left: 10px; width: 300px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 50; display: none; }
+    .emoji-panel.open { display: block; }
+    .emoji-tabs { display: flex; border-bottom: 1px solid var(--c-border); }
+    .emoji-tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 14px; cursor: pointer; background: none; border: none; transition: background 0.12s; }
+    .emoji-tab:hover { background: rgba(124,111,205,0.1); }
+    .emoji-tab.active { background: rgba(124,111,205,0.15); border-bottom: 2px solid var(--c-accent); }
+    .emoji-grid { display: grid; grid-template-columns: repeat(8,1fr); padding: 8px; gap: 2px; max-height: 180px; overflow-y: auto; }
+    .emoji-btn { font-size: 20px; padding: 4px; text-align: center; cursor: pointer; border-radius: 4px; background: none; border: none; transition: background 0.1s; line-height: 1.3; }
+    .emoji-btn:hover { background: rgba(124,111,205,0.15); }
+    /* Store modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+    .modal-overlay.hidden { display: none; }
+    .store-modal { background: var(--c-bg); border: 1px solid var(--c-border); width: 100%; max-width: 680px; border-radius: 12px; overflow: hidden; max-height: 85vh; display: flex; flex-direction: column; }
+    .store-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--c-border); background: var(--c-surface); flex-shrink: 0; }
+    .store-title { display: flex; align-items: center; gap: 10px; }
+    .store-title h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--c-accent2); }
+    .token-balance { display: flex; align-items: center; gap: 8px; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); padding: 6px 14px; border-radius: 20px; }
+    .token-balance .coin { font-size: 14px; }
+    .token-balance .amount { font-size: 13px; font-weight: 400; color: var(--c-gold); }
+    .token-balance .label { font-size: 9px; color: var(--c-muted); letter-spacing: 0.2em; text-transform: uppercase; }
+    .modal-close { background: none; border: none; cursor: pointer; color: var(--c-muted); font-size: 20px; transition: color 0.15s; }
+    .modal-close:hover { color: var(--c-text); }
+    .store-tabs { display: flex; padding: 0 24px; border-bottom: 1px solid var(--c-border); background: var(--c-surface); flex-shrink: 0; }
+    .store-tab { padding: 10px 16px 11px; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; font-weight: 300; }
+    .store-tab:hover { color: var(--c-text); }
+    .store-tab.active { color: var(--c-accent2); border-bottom-color: var(--c-accent2); }
+    .store-body { overflow-y: auto; padding: 20px 24px; flex: 1; }
+    .store-section-label { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: var(--c-muted); margin-bottom: 14px; }
+    .powers-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 28px; }
+    .power-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; padding: 16px 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative; }
+    .power-card:hover { border-color: var(--c-accent); background: rgba(124,111,205,0.06); }
+    .power-card.owned { border-color: var(--c-online); }
+    .power-card.owned::after { content: '✓'; position: absolute; top: 8px; right: 10px; font-size: 10px; color: var(--c-online); }
+    .power-icon { font-size: 32px; line-height: 1; }
+    .power-name { font-size: 11px; font-weight: 400; color: var(--c-text); letter-spacing: 0.05em; text-align: center; }
+    .power-desc { font-size: 10px; color: var(--c-muted); text-align: center; line-height: 1.5; }
+    .power-price { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--c-gold); font-weight: 400; }
+    .power-buy-btn { width: 100%; background: linear-gradient(135deg,var(--c-accent),var(--c-accent2)); color: #fff; border: none; border-radius: 5px; padding: 7px; font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; }
+    .power-buy-btn:hover { opacity: 0.85; }
+    .power-buy-btn.owned-btn { background: rgba(52,211,153,0.15); color: var(--c-online); cursor: default; }
+    .token-packs { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .token-pack { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 8px; padding: 20px 14px; text-align: center; cursor: pointer; transition: border-color 0.15s; position: relative; }
+    .token-pack:hover { border-color: var(--c-gold); }
+    .token-pack.popular::before { content: 'POPULAR'; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: var(--c-gold); color: #1a1008; font-size: 7px; letter-spacing: 0.3em; padding: 2px 8px; border-radius: 3px; }
+    .pack-coins { font-size: 28px; margin-bottom: 6px; }
+    .pack-amount { font-size: 20px; font-weight: 400; color: var(--c-gold); margin-bottom: 4px; }
+    .pack-label { font-size: 9px; color: var(--c-muted); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; }
+    .pack-price { font-size: 14px; color: var(--c-text); font-weight: 400; margin-bottom: 10px; }
+    .pack-buy-btn { width: 100%; background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: var(--c-gold); padding: 7px; border-radius: 5px; font-family: 'Inter', sans-serif; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; }
+    .pack-buy-btn:hover { background: rgba(251,191,36,0.2); }
+    /* Guest modal */
+    .name-modal { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 12px; width: 100%; max-width: 380px; padding: 36px 32px; }
+    .name-modal h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--c-accent2); margin-bottom: 6px; }
+    .name-modal p { font-size: 12px; color: var(--c-muted); margin-bottom: 24px; }
+    .name-input { width: 100%; background: var(--c-input-bg); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 14px; color: var(--c-text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 300; outline: none; margin-bottom: 14px; transition: border-color 0.15s; }
+    .name-input:focus { border-color: var(--c-accent); }
+    .name-input::placeholder { color: var(--c-muted); }
+    .name-join-btn { width: 100%; background: linear-gradient(135deg,var(--c-accent),var(--c-accent2)); color: #fff; border: none; border-radius: 6px; padding: 12px; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; margin-bottom: 12px; }
+    .name-join-btn:hover { opacity: 0.85; }
+    .name-signin-link { text-align: center; font-size: 11px; color: var(--c-muted); }
+    .name-signin-link a { color: var(--c-accent2); text-decoration: none; }
+    @media (max-width: 680px) {
+      header { padding: 18px 20px; }
+      .chat-body { grid-template-columns: 1fr; }
+      .chat-sidebar { display: none; }
+      .messages-scroll { padding: 12px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="wordmark" href="/">Jibran Qazi</a>
+    <div class="header-right">
+      <a class="nav-link" href="/community">Community</a>
+      <span id="auth-nav"></span>
+    </div>
+  </header>
+
+  <div class="chat-shell">
+    <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="chat-room-icon">💬</div>
+        <span class="chat-room-name">The Lounge</span>
+        <span class="chat-room-topic">· Members &amp; fans of Jibran Qazi</span>
+      </div>
+      <div class="chat-header-right">
+        <span class="online-pill"><span class="online-dot"></span><span id="online-count">0</span> online</span>
+        <button class="header-icon-btn" title="The Atelier" onclick="openStore()">🏪</button>
+      </div>
+    </div>
+
+    <div class="chat-body">
+      <div class="chat-messages-col">
+        <div class="emoji-panel" id="emoji-panel">
+          <div class="emoji-tabs" id="emoji-tabs"></div>
+          <div class="emoji-grid" id="emoji-grid"></div>
+        </div>
+        <div class="messages-scroll" id="messages"></div>
+        <div class="input-area">
+          <div class="input-toolbar">
+            <button class="tool-btn" onclick="toggleEmojiPanel()">😊</button>
+            <div class="tool-separator"></div>
+            <button class="tool-btn atelier-btn" onclick="openStore()">✦ Atelier</button>
+          </div>
+          <div class="input-row">
+            <input class="chat-input" type="text" id="chat-input" placeholder="Say something…" maxlength="1000" />
+            <button class="send-btn" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-sidebar">
+        <div class="sidebar-header">Online — <span id="sidebar-count">0</span></div>
+        <div class="user-list" id="user-list"></div>
+        <div class="sidebar-footer"><p>Keep it respectful.<br>No spam.<br>Have fun.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store modal -->
+  <div class="modal-overlay hidden" id="store-overlay">
+    <div class="store-modal">
+      <div class="store-header">
+        <div class="store-title"><span>✦</span><h2>The Atelier</h2></div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <div class="token-balance"><span class="coin">🪙</span><span class="amount" id="token-display">—</span><span class="label">Tokens</span></div>
+          <button class="modal-close" onclick="closeStore()">×</button>
+        </div>
+      </div>
+      <div class="store-tabs">
+        <button class="store-tab active" onclick="setStoreTab('powers',this)">Powers</button>
+        <button class="store-tab" onclick="setStoreTab('tokens',this)">Get Tokens</button>
+      </div>
+      <div class="store-body">
+        <div id="tab-powers">
+          <p class="store-section-label" style="margin-bottom:16px;">Profile &amp; Chat Powers</p>
+          <div class="powers-grid" id="powers-grid"></div>
+        </div>
+        <div id="tab-tokens" style="display:none">
+          <p class="store-section-label" style="margin-bottom:4px;">Your balance: <span id="token-balance-label" style="color:var(--c-gold);">—</span></p>
+          <p style="font-size:11px;color:var(--c-muted);margin-bottom:20px;">Use tokens to buy powers and unlock features in the chat.</p>
+          <div class="token-packs">
+            <div class="token-pack"><div class="pack-coins">🪙</div><div class="pack-amount">100</div><div class="pack-label">Tokens</div><div class="pack-price">£0.99</div><button class="pack-buy-btn" onclick="alert('Token purchases coming soon — Stripe integration in progress.')">Buy</button></div>
+            <div class="token-pack popular"><div class="pack-coins">🪙🪙</div><div class="pack-amount">500</div><div class="pack-label">Tokens</div><div class="pack-price">£3.99</div><button class="pack-buy-btn" onclick="alert('Token purchases coming soon — Stripe integration in progress.')">Buy</button></div>
+            <div class="token-pack"><div class="pack-coins">🪙🪙🪙</div><div class="pack-amount">1,500</div><div class="pack-label">Tokens</div><div class="pack-price">£9.99</div><button class="pack-buy-btn" onclick="alert('Token purchases coming soon — Stripe integration in progress.')">Buy</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest name modal -->
+  <div class="modal-overlay hidden" id="name-modal">
+    <div class="name-modal">
+      <h2>Join the chat</h2>
+      <p>Pick a name to appear as in the room</p>
+      <input class="name-input" type="text" id="guest-name-input" placeholder="Your name" maxlength="32" />
+      <button class="name-join-btn" onclick="joinGuest()">Enter the lounge</button>
+      <p class="name-signin-link"><a href="/signin">Sign in as a member</a> for a full profile</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const ACCESS = localStorage.getItem('jq_access');
+    const POWERS_LIST = [
+      { id: 'crown',   icon: '👑', name: 'Crown',    desc: 'Crown icon next to your name',            cost: 50  },
+      { id: 'flame',   icon: '🔥', name: 'Flame',    desc: 'Flame badge — shows you\'re active',      cost: 75  },
+      { id: 'diamond', icon: '💎', name: 'Diamond',  desc: 'Exclusive diamond badge',                 cost: 200 },
+      { id: 'star',    icon: '⭐', name: 'Star',     desc: 'Gold star in the user list',              cost: 100 },
+      { id: 'rainbow', icon: '🌈', name: 'Rainbow',  desc: 'Animated rainbow glow on your name',     cost: 300 },
+      { id: 'ghost',   icon: '👻', name: 'Ghost',    desc: 'Appear invisible in the user list',       cost: 150 },
+      { id: 'color',   icon: '🎭', name: 'Color',    desc: 'Set a custom colour for your name',       cost: 80  },
+      { id: 'trophy',  icon: '🏆', name: 'Trophy',   desc: 'Awarded to long-standing members',        cost: 500 },
+      { id: 'jester',  icon: '🎪', name: 'Jester',   desc: 'Animated jester hat — for the fun ones', cost: 120 },
+    ];
+    const POWER_ICONS = { crown:'👑', flame:'🔥', diamond:'💎', star:'⭐', rainbow:'🌈', ghost:'👻', color:'🎭', trophy:'🏆', jester:'🎪' };
+
+    const EMOJI_SETS = [
+      { tab:'😀', emojis:['😀','😂','😍','🥰','😎','🤩','😅','😭','🥺','😤','🤔','😏','😇','🤗','😴','🤯','🥳','😬','🤭','😮'] },
+      { tab:'❤️', emojis:['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💕','💞','💓','💗','💖','💘','💝','💟','❣️','♥️','💔','🫀'] },
+      { tab:'🎉', emojis:['🎉','🎊','🎈','🎁','🎀','🪅','🎆','🎇','✨','🌟','💫','⭐','🌠','🎵','🎶','🎸','🎤','🎭','🎪','🎠'] },
+      { tab:'👍', emojis:['👍','👎','👏','🙌','🤝','👊','✊','🤛','🤜','🤙','👋','🤚','✋','🖐️','👌','🤌','🤏','✌️','🤞','🫶'] },
+      { tab:'🌟', emojis:['🌟','⭐','💫','✨','🌈','☀️','🌙','⚡','❄️','🌊','🔥','💨','🌸','🌺','🌻','🌹','🍀','🌿','🌴','🦋'] },
+      { tab:'🔥', emojis:['🔥','💯','🚀','⚡','🎯','🏆','👑','💎','🏅','🥇','🎖️','🌊','💪','🦁','🐯','⚔️','🛡️','⭐','🌟','✨'] },
+    ];
+
+    let myTokens = 100;
+    let myPowers = [];
+    let socket;
+    let lastAuthorId = null;
+    let lastMsgTime = null;
+
+    function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function fmtTime(iso) {
+      return new Date(iso).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    }
+
+    // ── Auth nav ──────────────────────────────────────────────────
+    function renderAuthNav() {
+      const nav = document.getElementById('auth-nav');
+      if (ACCESS) {
+        nav.innerHTML = `<a class="nav-link" href="/members">Members</a>
+          <button class="nav-btn" onclick="signOut()">Sign out</button>`;
+      } else {
+        nav.innerHTML = `<a class="nav-link" href="/signin">Sign in</a>`;
+      }
+    }
+    async function signOut() {
+      await fetch('/auth/signout',{method:'POST',headers:{Authorization:`Bearer ${ACCESS}`}}).catch(()=>{});
+      ['jq_access','jq_refresh','jq_id'].forEach(k=>localStorage.removeItem(k));
+      location.href='/';
+    }
+
+    // ── Emoji panel ───────────────────────────────────────────────
+    function initEmojis() {
+      const tabs = document.getElementById('emoji-tabs');
+      tabs.innerHTML = EMOJI_SETS.map((s,i) =>
+        `<button class="emoji-tab${i===0?' active':''}" onclick="setEmojiTab(${i},this)">${s.tab}</button>`
+      ).join('');
+      renderEmojiGrid(0);
+    }
+    function setEmojiTab(idx, btn) {
+      document.querySelectorAll('.emoji-tab').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      renderEmojiGrid(idx);
+    }
+    function renderEmojiGrid(idx) {
+      document.getElementById('emoji-grid').innerHTML = EMOJI_SETS[idx].emojis.map(e =>
+        `<button class="emoji-btn" onclick="insertEmoji('${e}')">${e}</button>`
+      ).join('');
+    }
+    function toggleEmojiPanel() { document.getElementById('emoji-panel').classList.toggle('open'); }
+    function insertEmoji(e) {
+      const input = document.getElementById('chat-input');
+      input.value += e; input.focus();
+    }
+    document.addEventListener('click', e => {
+      const panel = document.getElementById('emoji-panel');
+      if (panel.classList.contains('open') && !panel.contains(e.target) && !e.target.closest('.tool-btn')) {
+        panel.classList.remove('open');
+      }
+    });
+
+    // ── Store ─────────────────────────────────────────────────────
+    function openStore() {
+      if (!ACCESS) { document.getElementById('name-modal').classList.remove('hidden'); return; }
+      renderPowers();
+      document.getElementById('store-overlay').classList.remove('hidden');
+    }
+    function closeStore() { document.getElementById('store-overlay').classList.add('hidden'); }
+    function setStoreTab(tab, btn) {
+      document.querySelectorAll('.store-tab').forEach(t=>t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-powers').style.display = tab==='powers' ? '' : 'none';
+      document.getElementById('tab-tokens').style.display  = tab==='tokens'  ? '' : 'none';
+    }
+    document.getElementById('store-overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('store-overlay')) closeStore();
+    });
+
+    function renderPowers() {
+      document.getElementById('token-display').textContent = myTokens;
+      document.getElementById('token-balance-label').textContent = `🪙 ${myTokens} tokens`;
+      document.getElementById('powers-grid').innerHTML = POWERS_LIST.map(p => {
+        const owned = myPowers.includes(p.id);
+        return `<div class="power-card${owned?' owned':''}">
+          <div class="power-icon">${p.icon}</div>
+          <div class="power-name">${p.name}</div>
+          <div class="power-desc">${p.desc}</div>
+          <div class="power-price">🪙 ${p.cost} tokens</div>
+          <button class="power-buy-btn${owned?' owned-btn':''}" ${owned?'disabled':''} onclick="buyPower('${p.id}',${p.cost},this)">
+            ${owned ? 'Owned' : 'Buy'}
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    async function buyPower(id, cost, btn) {
+      if (myPowers.includes(id)) return;
+      if (myTokens < cost) { alert('Not enough tokens. Visit Get Tokens to top up.'); return; }
+      btn.disabled = true; btn.textContent = '…';
+      try {
+        const r = await fetch('/api/chat/powers/buy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${ACCESS}` },
+          body: JSON.stringify({ power: id, cost })
+        });
+        const data = await r.json();
+        if (!r.ok) { alert(data.error || 'Failed.'); btn.disabled = false; btn.textContent = 'Buy'; return; }
+        myTokens = data.tokens;
+        myPowers = data.powers;
+        renderPowers();
+        // Reconnect so new powers show in chat
+        socket.emit('authenticate', { token: ACCESS });
+      } catch { btn.disabled = false; btn.textContent = 'Buy'; }
+    }
+
+    // ── Messages ──────────────────────────────────────────────────
+    function appendMessage(msg, isHistory) {
+      const msgs = document.getElementById('messages');
+      const isConsecutive = lastAuthorId === (msg.authorSub || msg.authorName) &&
+        lastMsgTime && (new Date(msg.createdAt) - new Date(lastMsgTime)) < 120000;
+
+      lastAuthorId = msg.authorSub || msg.authorName;
+      lastMsgTime = msg.createdAt;
+
+      const powerBadges = (msg.powers || []).map(p => POWER_ICONS[p] || '').join('');
+      const isOwner = msg.role === 'owner';
+      const roleClass = msg.role || 'guest';
+      const initial = (msg.authorName||'?')[0].toUpperCase();
+
+      const row = document.createElement('div');
+      row.className = `msg-row${isConsecutive ? ' condensed' : ' gap'}`;
+      row.innerHTML = `
+        <div class="msg-avatar ${roleClass}">${initial}</div>
+        <div class="msg-main">
+          <div class="msg-header">
+            <span class="msg-name ${roleClass}">${esc(msg.authorName)}</span>
+            ${isOwner ? '<span class="rank-badge owner">Owner</span>' : ''}
+            ${powerBadges ? `<span class="power-badge">${powerBadges}</span>` : ''}
+            <span class="msg-time">${fmtTime(msg.createdAt)}</span>
+          </div>
+          <div class="msg-bubble">${esc(msg.text)}</div>
+        </div>`;
+      msgs.appendChild(row);
+      if (!isHistory) msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function appendSys(text) {
+      const msgs = document.getElementById('messages');
+      const p = document.createElement('p');
+      p.className = 'sys-msg';
+      p.textContent = text;
+      msgs.appendChild(p);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    function renderUsers(users) {
+      const count = users.length;
+      document.getElementById('online-count').textContent = count;
+      document.getElementById('sidebar-count').textContent = count;
+      document.getElementById('user-list').innerHTML = users.map(u => {
+        const powerIcons = (u.powers||[]).map(p=>POWER_ICONS[p]||'').join('');
+        const roleClass = u.role || 'guest';
+        const initial = (u.name||'?')[0].toUpperCase();
+        return `<div class="user-item">
+          <div class="user-avatar ${roleClass}">${initial}</div>
+          <div class="user-info">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span class="user-display-name ${roleClass}">${esc(u.name)}</span>
+              ${powerIcons ? `<span class="user-power-icons">${powerIcons}</span>` : ''}
+            </div>
+            <div class="user-status">${u.role==='owner'?'Owner':u.role==='member'?'Member':'Guest'}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Send ──────────────────────────────────────────────────────
+    function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text || !socket) return;
+      socket.emit('message', { text });
+      input.value = '';
+      document.getElementById('emoji-panel').classList.remove('open');
+    }
+    document.getElementById('chat-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    // ── Guest join ────────────────────────────────────────────────
+    function joinGuest() {
+      const name = document.getElementById('guest-name-input').value.trim();
+      if (!name) return;
+      document.getElementById('name-modal').classList.add('hidden');
+      connectSocket(null, name);
+    }
+    document.getElementById('guest-name-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') joinGuest();
+    });
+
+    // ── Socket connect ────────────────────────────────────────────
+    function connectSocket(token, guestName) {
+      socket = io();
+      socket.on('connect', () => {
+        socket.emit('authenticate', { token, guestName });
+      });
+      socket.on('history', msgs => {
+        const container = document.getElementById('messages');
+        container.innerHTML = '';
+        lastAuthorId = null; lastMsgTime = null;
+        if (msgs.length) {
+          const d = document.createElement('div');
+          d.className = 'day-divider';
+          d.innerHTML = '<span class="day-divider-text">Earlier</span>';
+          container.appendChild(d);
+        }
+        msgs.forEach(m => appendMessage(m, true));
+        container.scrollTop = container.scrollHeight;
+      });
+      socket.on('message', msg => appendMessage(msg, false));
+      socket.on('user_joined', ({ name }) => appendSys(`${name} joined the room`));
+      socket.on('user_left',   ({ name }) => appendSys(`${name} left the room`));
+      socket.on('users', users => renderUsers(users));
+    }
+
+    // ── Init ──────────────────────────────────────────────────────
+    async function init() {
+      renderAuthNav();
+      initEmojis();
+
+      if (ACCESS) {
+        try {
+          const r = await fetch('/api/chat/me', { headers: { Authorization: `Bearer ${ACCESS}` } });
+          if (r.ok) { const d = await r.json(); myTokens = d.tokens; myPowers = d.powers; }
+        } catch {}
+        connectSocket(ACCESS, null);
+      } else {
+        // Show guest name modal
+        document.getElementById('name-modal').classList.remove('hidden');
+        document.getElementById('guest-name-input').focus();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
