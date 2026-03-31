@@ -3,6 +3,8 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { Server: SocketIOServer } = require('socket.io');
 const multer = require('multer');
 const { DynamoDBClient, CreateTableCommand, DescribeTableCommand } = require('@aws-sdk/client-dynamodb');
@@ -13,9 +15,36 @@ const { SESv2Client, SendEmailCommand } = require('@aws-sdk/client-sesv2');
 
 const app = express();
 const httpServer = http.createServer(app);
-const io = new SocketIOServer(httpServer, { cors: { origin: '*' } });
+const io = new SocketIOServer(httpServer, { cors: { origin: ['https://jibranqazi.com', 'http://localhost:3000'] } });
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'jq2026admin';
+
+// ── Admin password — must be set via environment variable ─────────
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('FATAL: ADMIN_PASSWORD environment variable is not set. Server will not start.');
+  process.exit(1);
+}
+
+// ── Security middleware ───────────────────────────────────────────
+app.use(helmet({ contentSecurityPolicy: false })); // CSP off — inline scripts in HTML pages
+
+// Rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many attempts. Please try again in 15 minutes.' }
+});
+const subscribeLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many subscription requests.' }
+});
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false,
+  message: { error: 'Too many requests. Slow down.' }
+});
+
+app.use('/auth', authLimiter);
+app.use('/subscribe', subscribeLimiter);
+app.use('/api', apiLimiter);
 const REGION = 'us-east-1';
 const TABLE = 'jibranqazi-subscribers';
 const POSTS_TABLE = 'jibranqazi-posts';
